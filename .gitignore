@@ -1,0 +1,11 @@
+# vim swap files
+*.swp
+
+# ncverilog simulation files
+INCA_libs
+ncverilog.*
+*.log
+*.fsdb
+nWaveLog
+novas.*
+BSSLib.lib++
