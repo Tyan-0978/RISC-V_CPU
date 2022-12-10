@@ -2,7 +2,7 @@
 // shift operation module
 // -----------------------------------------------------------------------------
 
-module logic (
+module shift (
     input         i_mode, // 0: logical, 1: arithmetic (keep sign)
     input         i_direction, // 0: left, 1: right
     input  signed [31:0] i_a,
