@@ -36,10 +36,20 @@ reg  [24:0] op_result;
 wire signed [8:0] exp_diff;
 wire        [7:0] larger_exp;
 
+wire [23:0] rm_zeros_diff;
+wire [7:0]  rm_zeros_num;
+
 // output
 reg         out_sign;
 reg  [7:0]  out_exp;
 reg  [22:0] out_frac;
+
+// modules -----------------------------------------------------------
+shift_sub s0 (
+    .i_diff(op_diff[23:0]), 
+    .o_shift_diff(rm_zeros_diff), 
+    .o_shift_num(rm_zeros_num)
+);
 
 // wire assignments --------------------------------------------------
 // FP decoding
@@ -84,11 +94,16 @@ always @(*) begin
     end
 
     // output
-    // TODO
     if (op_mode) begin // subtract
-        out_sign = a_sign ^ op_result[24];
-	out_exp  =
-	out_frac = 
+        out_sign = a_sign ^ op_diff[24];
+	if (rm_zeros_num > larger_exp) begin // too small; becomes 0
+	    out_exp = 0;
+	    out_frac = 0;
+	end
+	else begin
+	    out_exp = larger_exp - rm_zeros_num;
+	    out_frac = rm_zeros_diff[22:0];
+	end
     end
     else begin // add
         out_sign = a_sign;
@@ -110,8 +125,8 @@ endmodule
 // -----------------------------------------------------------------------------
 
 module shift_sub (
-    input  [24:0] i_diff,
-    output [24:0] o_shift_diff,
+    input  [23:0] i_diff,
+    output [23:0] o_shift_diff,
     output [4:0]  o_shift_num
 );
 
@@ -131,17 +146,17 @@ reg  [3:0]  or_2_sel_0;
 
 reg  [1:0]  or_1_sel_0;
 
-reg  [24:0] shift_layer [0:3];
-
-reg  [24:0] shift_diff;
+reg  [23:0] shift_layer [0:3];
+reg  [4:0]  shift_num;
 
 // wire assignments --------------------------------------------------
 assign o_shift_diff = shift_layer[0];
+assign o_shift_num = shift_num;
 
 // always block ------------------------------------------------------
 always @(*) begin
     for (x = 0; x <= 11; x = x + 1) begin
-        or_tree_1[x] = i_diff[2*x+1] | i_diff[2*x+2];
+        or_tree_1[x] = i_diff[2*x] | i_diff[2*x+1];
     end
     for (x = 0; x <= 5; x = x + 1) begin
         or_tree_2[x] = or_tree_1[2*x] | or_tree_1[2*x+1];
@@ -153,25 +168,29 @@ always @(*) begin
     // OR tree layer 3
     case (or_tree_3) 
         3'b1xx: begin
+	    shift_num[4:3] = 2'b00;
 	    shift_layer[3] = i_diff;
 	    or_3_sel_2 = or_tree_2[5:4];
 	    or_3_sel_1 = or_tree_1[11:8];
 	    or_3_sel_0 = i_diff[24:17];
 	end
         3'b01x: begin
+	    shift_num[4:3] = 2'b01; // 8
 	    shift_layer[3] = i_diff << 8;
 	    or_3_sel_2 = or_tree_2[3:2];
 	    or_3_sel_1 = or_tree_1[7:4];
 	    or_3_sel_0 = i_diff[16:9];
 	end
         3'b001: begin
+	    shift_num[4:3] = 2'b10; // 16
 	    shift_layer[3] = i_diff << 16;
 	    or_3_sel_2 = or_tree_2[1:0];
 	    or_3_sel_1 = or_tree_1[3:0];
 	    or_3_sel_0 = i_diff[8:1];
 	end
         default: begin // 0
-	    shift_layer[3] = i_diff << 24;
+	    shift_num[4:3] = 2'b11; // 24
+	    shift_layer[3] = 0;
 	    or_3_sel_2 = 0;
 	    or_3_sel_1 = 0;
 	    or_3_sel_0 = 0;
@@ -181,16 +200,19 @@ always @(*) begin
     // OR tree layer 2
     case (or_3_sel_2)
         2'b1x: begin
+	    shift_num[2] = 1;
 	    shift_layer[2] = shift_layer[3];
 	    or_2_sel_1 = or_3_sel_1[3:2];
 	    or_2_sel_0 = or_3_sel_0[7:4];
 	end
 	2'b01: begin
+	    shift_num[2] = 0;
 	    shift_layer[2] = shift_layer[3] << 4;
 	    or_2_sel_1 = or_3_sel_1[1:0];
 	    or_2_sel_0 = or_3_sel_0[3:0];
 	end
 	default: begin // 0
+	    shift_num[2] = 0;
 	    shift_layer[2] = shift_layer[3];
 	    or_2_sel_1 = 0;
 	    or_2_sel_0 = 0;
@@ -200,14 +222,17 @@ always @(*) begin
     // OR tree layer 1
     case (or_2_sel_1)
         2'b1x: begin
+	    shift_num[1] = 1;
 	    shift_layer[1] = shift_layer[2];
 	    or_1_sel_0 = or_2_sel_0[3:2];
 	end
 	2'b01: begin
+	    shift_num[1] = 0;
 	    shift_layer[1] = shift_layer[2] << 2;
 	    or_1_sel_0 = or_2_sel_0[1:0];
 	end
 	default: begin // 0
+	    shift_num[1] = 0;
 	    shift_layer[1] = shift_layer[2];
 	    or_1_sel_0 = 0;
 	end
@@ -216,12 +241,15 @@ always @(*) begin
     // OR tree layer 0
     case (or_1_sel_0)
         2'b1x: begin
+	    shift_num[0] = 1;
 	    shift_layer[0] = shift_layer[1];
 	end
 	2'b01: begin
+	    shift_num[0] = 0;
 	    shift_layer[0] = shift_layer[1] << 1;
 	end
 	default: begin // 0
+	    shift_num[0] = 0;
 	    shift_layer[0] = shift_layer[0];
 	end
     endcase
