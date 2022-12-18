@@ -11,14 +11,13 @@ module int_div (
     input  signed [31:0] i_a,
     input  signed [31:0] i_b,
     output signed [31:0] o_quotient,
-    output signed [31:0] o_quotient,
+    output signed [31:0] o_remainder,
 );
 
 parameter IDLE = 0;
 parameter CALC = 1;
 parameter DONE = 2;
 
-// TODO: revise code below (copied from int_mul)
 // wires & registers -------------------------------------------------
 
 // control signals
@@ -26,27 +25,35 @@ reg  [1:0] state, next_state;
 reg  [4:0] count, next_count;
 
 // computation signals
-wire out_sign;
-wire [30:0] sub_in_a, sub_in_b;
-wire [31:0] sub_out;
-reg  [62:0] shift_reg, next_shift_reg; // 32 + 31 bits
+wire        [31:0] sub_in_a, sub_in_b;
+wire signed [32:0] sub_out; // 33 bits
+reg         [61:0] shift_reg, next_shift_reg; // 31 + 31 bits
+
+wire        reverse_quotient;
+wire        remainder_mode;
+wire [31:0] comp_remainder; // complement
 
 // output
 reg         valid, next_valid;
-reg  [31:0] result, next_result;
+reg  [31:0] quotient , next_quotient;
+reg  [31:0] remainder, next_remainder;
 
 // wire assignments --------------------------------------------------
 
-assign out_sign = i_a[31] ^ i_b[31];
+// subtractor
+assign sub_in_a = shift_reg[61:30];
+assign sub_in_b = {1'b0, i_b[30:0]};
+assign sub_out = sub_in_a - sub_in_b;
 
-// adder
-assign add_in_a = shift_reg[62:32]
-assign add_in_b = i_a[30:0];
-assign add_out = add_in_a + add_in_b;
+// results
+assign reverse_quotient = i_a[31] ^ i_b[31];
+assign remainder_mode = {i_a[31], i_b[31]};
+assign comp_remainder = i_b[30:0] - shift_reg[61:31];
 
 // output
 assign o_valid = valid;
-assign o_result = result;
+assign o_quotient = quotient;
+assign o_remainder = remainder;
 
 // combinational always block ----------------------------------------
 
@@ -94,16 +101,17 @@ always @(*) begin
 
     // next shift register
     if (i_valid) begin
-        next_shift_reg = {32'd0, i_b[30:0]};
+        next_shift_reg = {31'd0, i_a[30:0]};
     end
     else begin
         if (state == CALC) begin
-	    next_shift_reg[30:0] = shift_reg[31:1];
-	    if (shift_reg[0]) begin // accumulate
-		next_shift_reg[62:31] = add_out;
+            next_shift_reg[0] = ~sub_out[32];
+	    next_shift_reg[30:1] = shift_reg[29:0]; // left shift
+	    if (sub_out[32]) begin // sub result is negative; shift
+		next_shift_reg[61:31] = shift_reg[60:30];
 	    end
-	    else begin // no accumulate, shift
-		next_shift_reg[62:31] = {1'b0, shift_reg[62:32]};
+	    else begin // use sub result
+		next_shift_reg[61:31] = sub_out[30:0];
 	    end
 	end
 	else begin
@@ -113,10 +121,22 @@ always @(*) begin
 
     // next output
     if (state == DONE) begin
-        next_result = {out_sign, shift_reg[30:0]};
+        // example of results for different sign mode
+        //  7 /  3 =  2 ...  1
+        //  7 / -3 = -3 ... -2
+        // -7 /  3 = -3 ...  2
+        // -7 / -3 =  2 ... -1
+        next_quotient  = {{reverse_quotient}} ^ {1'b0, shift_reg[30:0]};
+        case (remainder_mode)
+            2'b00: next_remainder = shift_reg[61:31];
+            2'b01: next_remainder = (~comp_remainder) + 1;
+            2'b10: next_remainder = comp_remainder;
+            2'b11: next_remainder = (~shift_reg[61:31]) + 1;
+        endcase
     end
     else begin
-        next_result = 0;
+        next_quotient  = 0;
+        next_remainder = 0;
     end
 end
 
@@ -127,14 +147,16 @@ always @(posedge i_clk or negedge i_rst_n) begin
 	state <= IDLE;
         valid <= 0;
 	count <= 0;
-	result <= 0;
+	quotient  <= 0;
+	remainder <= 0;
 	shift_reg <= 0;
     end
     else begin
 	state <= next_state;
         valid <= next_valid;
 	count <= next_count;
-	result <= next_result;
+	quotient  <= next_quotient;
+	remainder <= next_remainder;
 	shift_reg <= next_shift_reg;
     end
 end
