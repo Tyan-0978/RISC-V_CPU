@@ -2,7 +2,7 @@
 // floating point adder / subtractor module
 // -----------------------------------------------------------------------------
 
-module fp_add_sub (
+module int_add_sub (
     input  i_mode, // 0: add, 1: subtract
     input  [31:0] i_a,
     input  [31:0] i_b,
@@ -63,10 +63,10 @@ assign b_frac = i_b[22:0];
 // computation
 assign op_mode = a_sign ^ b_sign ^ i_mode;
 
-assign a_op = {1'b1, a_frac};
-assign b_op = {1'b1, b_frac};
+assign a_op = {1, a_frac};
+assign b_op = {1, b_frac};
 assign exp_diff = a_exp - b_exp;
-assign larger_exp = (exp_diff[8]) ? b_exp : a_exp;
+assign larger_exp = (exp_diff[8]) ? exp_b : exp_a;
 assign op_sum  = a_op_shift + b_op_shift;
 assign op_diff = a_op_shift - b_op_shift;
 
