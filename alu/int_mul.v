@@ -36,7 +36,7 @@ reg  [31:0] result, next_result;
 assign out_sign = i_a[31] ^ i_b[31];
 
 // adder
-assign add_in_a = shift_reg[62:32]
+assign add_in_a = shift_reg[62:32];
 assign add_in_b = i_a[30:0];
 assign add_out = add_in_a + add_in_b;
 

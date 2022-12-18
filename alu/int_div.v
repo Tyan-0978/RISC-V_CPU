@@ -11,7 +11,7 @@ module int_div (
     input  signed [31:0] i_a,
     input  signed [31:0] i_b,
     output signed [31:0] o_quotient,
-    output signed [31:0] o_remainder,
+    output signed [31:0] o_remainder
 );
 
 parameter IDLE = 0;
