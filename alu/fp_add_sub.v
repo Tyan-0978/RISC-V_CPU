@@ -2,7 +2,7 @@
 // floating point adder / subtractor module
 // -----------------------------------------------------------------------------
 
-module int_add_sub (
+module fp_add_sub (
     input  i_mode, // 0: add, 1: subtract
     input  [31:0] i_a,
     input  [31:0] i_b,
