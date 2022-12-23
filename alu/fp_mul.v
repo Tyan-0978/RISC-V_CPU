@@ -31,7 +31,7 @@ wire last_cycle;
 
 // fraction multiplication signals
 wire [23:0] add_in_a, add_in_b;
-wire [23:0] add_out;
+wire [24:0] add_out;
 reg  [47:0] shift_reg, next_shift_reg;
 
 // output
