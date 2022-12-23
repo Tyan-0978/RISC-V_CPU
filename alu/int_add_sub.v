@@ -9,14 +9,11 @@ module int_add_sub (
     output signed [31:0] o_result
 );
 
-reg  signed [31:0] op_b;
-reg  signed [31:0] out;
+wire signed [31:0] op_b;
+wire signed [31:0] out;
 
+assign op_b = i_b ^ i_mode;
+assign out = i_a + op_b + i_mode;
 assign o_result = out;
-
-always @ (*) begin
-    op_b = i_b ^ i_mode;
-    out = i_a + op_b + i_mode;
-end
 
 endmodule
