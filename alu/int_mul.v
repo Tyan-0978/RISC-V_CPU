@@ -28,7 +28,7 @@ reg  [4:0] count, next_count;
 wire out_sign;
 wire [30:0] add_in_a, add_in_b;
 wire [31:0] add_out;
-reg  [62:0] shift_reg, next_shift_reg; // 32 + 31 bits
+reg  [61:0] shift_reg, next_shift_reg; // 31 + 31 bits
 reg  [31:0] result, next_result;
 
 // wire assignments --------------------------------------------------
@@ -36,8 +36,8 @@ reg  [31:0] result, next_result;
 assign out_sign = i_a[31] ^ i_b[31];
 
 // adder
-assign add_in_a = shift_reg[62:32];
-assign add_in_b = i_a[30:0];
+assign add_in_a = i_a[30:0] & {{shift_reg[0]}};
+assign add_in_b = shift_reg[61:31];
 assign add_out = add_in_a + add_in_b;
 
 // output
@@ -45,7 +45,6 @@ assign o_valid = valid;
 assign o_result = result;
 
 // combinational always block ----------------------------------------
-
 always @(*) begin
     // next control signals
     case (state)
@@ -94,13 +93,8 @@ always @(*) begin
     end
     else begin
         if (state == CALC) begin
-	    next_shift_reg[30:0] = shift_reg[31:1];
-	    if (shift_reg[0]) begin // accumulate
-		next_shift_reg[62:31] = add_out;
-	    end
-	    else begin // no accumulate, shift
-		next_shift_reg[62:31] = {1'b0, shift_reg[62:32]};
-	    end
+	    next_shift_reg[29:0] = shift_reg[30:1];
+	    next_shift_reg[61:30] = add_out;
 	end
 	else begin
 	    next_shift_reg = shift_reg;
@@ -117,7 +111,6 @@ always @(*) begin
 end
 
 // sequential always block -------------------------------------------
-
 always @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
 	state <= IDLE;
