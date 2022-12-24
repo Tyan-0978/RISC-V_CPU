@@ -58,6 +58,7 @@ wire [31:0] int_div_o_quotient, int_div_o_remainder;
 
 // control signals
 wire mul_stall, div_stall;
+// TODO: set i_valid signals for mul, div module
 
 // output
 reg  [31:0] result_select;
