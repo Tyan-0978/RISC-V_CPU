@@ -10,11 +10,11 @@ module alu (
     input  [ 2:0] i_func_op, // functional options
     input         i_fp_mode, // 0: integer, 1: FP
     input         i_stall,
-    output        o_stall,
+    output        o_stall, // non-blocking
     // operands & result
     input  [31:0] i_a,
     input  [31:0] i_b,
-    output [31:0] o_result
+    output [31:0] o_result // blocking; only change at posedge clk
 );
 
 // operation modes (i_op_mode)
@@ -57,6 +57,11 @@ wire        int_div_o_valid;
 wire [31:0] int_div_o_quotient, int_div_o_remainder;
 
 // control signals
+wire mul_stall, div_stall;
+
+// output
+reg  [31:0] result_select;
+reg  [31:0] result, next_result;
 
 // sub-modules -------------------------------------------------------
 logic logic0 (
@@ -113,6 +118,39 @@ assign int_mul_i_b = i_b;
 assign int_div_i_a = i_a;
 assign int_div_i_b = i_b;
 
-// TODO: stall control
+// output stall signal
+assign mul_stall = (i_op_mode == INT_MUL && !int_mul_o_valid);
+assign div_stall = (i_op_mode == INT_DIV && !int_div_o_valid);
+assign o_stall = (mul_stall | div_stall);
+
+assign o_result = result;
+
+// combinational always block ----------------------------------------
+always @(*) begin
+    // result selection
+    case (i_op_mode)
+        IDLE:        result_select = i_a;
+	LOGIC:       result_select = logic_o_result;
+	SHIFT:       result_select = shift_o_result;
+	COMPARE:     result_select = comp_o_result;
+	INT_ADD_SUB: result_select = int_add_sub_o_result;
+	INT_MUL:     result_select = int_mul_o_result;
+	INT_DIV:     result_select = int_div_o_result;
+	default:     result_select = i_a;
+    endcase
+
+    // next result
+    if (i_stall) next_result = result; // do not change output
+    else         next_result = result_select;
+end
+
+// sequential always block -------------------------------------------
+always @(posedge i_clk or negedge i_rst_n) begin
+    if (!i_rst_n) begin
+        result <= 0;
+    end else begin
+        result <= next_result;
+    end
+end
 
 endmodule
