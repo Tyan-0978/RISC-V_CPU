@@ -11,8 +11,8 @@ class rand_in;
     rand bit signed [31:0] b;
 
     constraint c {
-        a >= -1000; a <= 1000;
-        b >= -1000; b <= 1000;
+        a >= 0; a <= 1000000000;
+        b >= 0; b <= 1000;
     }
 endclass
 
@@ -23,7 +23,7 @@ localparam CLK = 10;
 localparam HCLK = CLK/2;
 
 // number of tests
-localparam num_tests = 100;
+localparam num_tests = 1000;
 
 logic rst_n, clk, in_valid;
 initial clk = 0;
@@ -73,7 +73,7 @@ initial begin
 
         @(posedge out_valid);
 	while (!out_valid) @(negedge clk);
-        if (quotient !== ans_q or remainder !== ans_r) begin
+        if ((quotient !== ans_q) || (remainder !== ans_r)) begin
             $display("Error on test %0d", i);
             $display("a = %d, b = %d, quotient = %d, expected = %d" , a, b, quotient, ans_q);
             $display("a = %d, b = %d, remainder = %d, expected = %d" , a, b, remainder, ans_r);
@@ -89,7 +89,7 @@ initial begin
 end
 
 initial begin
-    #(10000*CLK);
+    #(100000*CLK);
     $display("================================================================================");
     $display("Too slow, abort");
     $display("================================================================================");
