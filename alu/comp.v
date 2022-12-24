@@ -5,8 +5,8 @@
 module comp (
     input        i_eq,   // 0: without equal, 1: with equal
     input  [1:0] i_mode, // 00: <, 01: >, 1x: ==
-    input  [31:0] i_a,
-    input  [31:0] i_b,
+    input  signed [31:0] i_a,
+    input  signed [31:0] i_b,
     output [31:0] o_result
 );
 
