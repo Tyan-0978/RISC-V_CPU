@@ -29,6 +29,7 @@ logic avm_read_r, avm_read_w, avm_write_r, avm_write_w;
 
 logic calculation_start_r, calculation_start_w;
 logic calculation_finished;
+logic [31:0] answer;
 
 logic rst_n;
 
@@ -40,9 +41,9 @@ assign avm_writedata = result_r[247-:8];
 cpu core_cpu(
     .i_rst_n(rst_n),
     .i_clk(avm_clk),
-    .i_start(),
-    .o_ecall_ready(),
-    .o_ecall_data()
+    .i_start(calculation_start_r),
+    .o_ecall_ready(calculation_finished),
+    .o_ecall_data(answer)
 );
 
 
@@ -61,7 +62,7 @@ always@(*) begin
                 avm_address_w = avm_address_r;
                 if (calculation_finished && !calculation_start_r) begin
                     state_w = S_SEND_RESULT;
-                    result_w = ; //
+                    result_w = answer; //
                 end
                 else begin
                     state_w = state_r;
@@ -125,7 +126,7 @@ always@(*) begin
         avm_address_w = avm_address_r;
         if (calculation_finished && !calculation_start_r) begin
             state_w = S_SEND_RESULT;
-            result_w = ; //
+            result_w = answer; //
         end
         else begin
             state_w = state_r;

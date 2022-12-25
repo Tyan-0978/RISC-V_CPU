@@ -82,6 +82,7 @@ always@(*) begin
             o_mem_write = 0;
             o_branch = 0;
         end
+        /*
         AUIPC_OP: begin // TB Checked
             o_op_mode = 0;
             o_func_op = 3'b000;
@@ -97,8 +98,9 @@ always@(*) begin
             o_mem_write = 0;
             o_branch = 1;
         end
+        */
         JAL_OP: begin //TB Checked
-            o_op_mode = 0;
+            o_op_mode = 4;
             o_func_op = 3'b000;
             o_fp_mode = 0;
             o_rd = rd;
