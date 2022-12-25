@@ -58,7 +58,8 @@ wire [31:0] int_div_o_quotient, int_div_o_remainder;
 
 // control signals
 wire mul_stall, div_stall;
-// TODO: set i_valid signals for mul, div module
+wire is_mode_mul, is_mode_div;
+reg  delayed_int_mul_mode, delayed_int_div_mode;
 
 // output
 reg  [31:0] result_select;
@@ -119,6 +120,12 @@ assign int_mul_i_b = i_b;
 assign int_div_i_a = i_a;
 assign int_div_i_b = i_b;
 
+// i_valid control
+assign is_mode_mul = (i_op_mode == INT_MUL);
+assign is_mode_div = (i_op_mode == INT_DIV);
+assign int_mul_i_valid = (is_mode_mul ^ delayed_int_mul_mode);
+assign int_div_i_valid = (is_mode_div ^ delayed_int_div_mode);
+
 // output stall signal
 assign mul_stall = (i_op_mode == INT_MUL && !int_mul_o_valid);
 assign div_stall = (i_op_mode == INT_DIV && !int_div_o_valid);
@@ -148,9 +155,13 @@ end
 // sequential always block -------------------------------------------
 always @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
+        delayed_int_mul_mode <= 0;
+        delayed_int_div_mode <= 0;
         result <= 0;
     end else begin
         result <= next_result;
+        delayed_int_mul_mode <= (is_mode_mul & ~int_mul_o_valid);
+        delayed_int_div_mode <= (is_mode_div & ~int_div_o_valid);
     end
 end
 
