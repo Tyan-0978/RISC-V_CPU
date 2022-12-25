@@ -25,6 +25,7 @@ localparam COMPARE     = 3;
 localparam INT_ADD_SUB = 4;
 localparam INT_MUL     = 5;
 localparam INT_DIV     = 6;
+localparam INT_MOD     = 7;
 
 // registers & wires -------------------------------------------------
 // sub-module ports
@@ -143,7 +144,8 @@ always @(*) begin
 	COMPARE:     result_select = comp_o_result;
 	INT_ADD_SUB: result_select = int_add_sub_o_result;
 	INT_MUL:     result_select = int_mul_o_result;
-	INT_DIV:     result_select = int_div_o_result;
+	INT_DIV:     result_select = int_div_o_quotient;
+	INT_MOD:     result_select = int_div_o_remainder;
 	default:     result_select = i_a;
     endcase
 
