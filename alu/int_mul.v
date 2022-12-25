@@ -71,9 +71,8 @@ always @(*) begin
 	        next_state = CALC;
 	    end
 	    else begin
-	        next_state = state;
+	        next_state = IDLE;
 	    end
-	    next_count = 0;
 	end
 	default: begin
 	    next_state = IDLE;
@@ -100,7 +99,7 @@ always @(*) begin
         next_result = {out_sign, shift_reg[30:0]};
     end
     else begin
-        next_result = result;
+        next_result = 0;
     end
 end
 
