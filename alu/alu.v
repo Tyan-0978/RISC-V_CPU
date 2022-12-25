@@ -123,7 +123,7 @@ assign int_div_i_b = i_b;
 
 // i_valid control
 assign is_mode_mul = (i_op_mode == INT_MUL);
-assign is_mode_div = (i_op_mode == INT_DIV);
+assign is_mode_div = (i_op_mode == INT_DIV || i_op_mode == INT_MOD);
 assign int_mul_i_valid = (is_mode_mul ^ delayed_int_mul_mode);
 assign int_div_i_valid = (is_mode_div ^ delayed_int_div_mode);
 
