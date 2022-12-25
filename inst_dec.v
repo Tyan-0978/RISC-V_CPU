@@ -97,7 +97,7 @@ always@(*) begin
             end
         end 
         JALR_OP: begin
-
+            
 
         B_type_OP: begin
             o_op_mode = 3;
@@ -121,12 +121,25 @@ always@(*) begin
             o_rs2 = rs2;
             o_imm = {i_inst_data[31], i_inst_data[7], i_inst_data[30:25], i_inst_data[11:8], };
         end
-        LOAD_OP: begin 
-            o_func_op = ;
+        LOAD_OP: begin
+            o_op_mode = 4;
+            o_func_op = 3'b000;
+            o_fp_mode = 0;
+            o_rd = rd;
+            o_rs1 = rs1;
+            o_rs2 = 5'b00000;
+            o_imm = {20'd0, i_inst_data[31:20]};
+        end
 
-        STORE_OP: begin 
-            o_func_op = ;
-
+        STORE_OP: begin
+            o_op_mode = 4;
+            o_func_op = 3'b000;
+            o_fp_mode = 0;
+            o_rd = 5'b00000;
+            o_rs1 = rs1;
+            o_rs2 = rs2;
+            o_imm = {20'd0, i_inst_data[31:25], i_inst_data[11:7]}
+        end
         I_TYPE_OP: begin
             case (funct3) 
                 3'b000: begin //ADDI
@@ -180,17 +193,32 @@ always@(*) begin
         R_TYPE_OP: begin
             case(funct3) 
                 3'b000: begin
-                    o_op_mode = 4;
-                    if (funct7 == 7'b0000000) // ADD
+                    if (funct7 == 7'b0000000) begin // ADD
+                        o_op_mode = 4;
                         o_func_op = 3'b000;
-                    else if (funct7 == 7'b0100000) // SUB
+                    end
+                    else if (funct7 == 7'b0100000) begin // SUB
+                        o_op_mode = 4;
                         o_func_op = 3'b001;
-                    else //something wrong
+                    end
+                    else if (funct7 == 7'b0000001) begin // MUL
+                        o_op_mode = 5;
+                        o_func_op = 3'b000;
+                    end
+                    else begin //something wrong 
+                        o_op_mode = 0;
                         o_func_op = 3'b111;
+                    end
                 end
-                3'b001: begin // SLL
-                    o_op_mode = 2;
-                    o_func_op = 3'b000;
+                3'b001: begin 
+                    if (funct7 == 7'b0000000) begin // SLL
+                        o_op_mode = 2;
+                        o_func_op = 3'b000;
+                    end
+                    else begin //something wrong (or MULH)
+                        o_op_mode = 0;
+                        o_func_op = 3'b000;
+                    end
                 end
                 3'b010: begin // SLT
                     o_op_mode = 3;
@@ -200,9 +228,15 @@ always@(*) begin
                     o_op_mode = 3;
                     o_func_op = 3'b000;
                 end
-                3'b100: begin // XOR
-                    o_op_mode = 1;
-                    o_func_op = 3'b010;
+                3'b100: begin 
+                    if (funct7 == 7'b0000000) begin // XOR
+                        o_op_mode = 1;
+                        o_func_op = 3'b010;
+                    end
+                    else if (funct7 == 7'b0000001) begin // DIV
+                        o_op_mode = 6;
+                        o_func_op = 3'b000;
+                    end
                 end
                 3'b101: begin
                     if (funct7 == 7'b0000000) begin //SRL
@@ -218,9 +252,15 @@ always@(*) begin
                         o_func_op = 3'b000;
                     end
                 end
-                3'b110: begin // OR
-                    o_op_mode = 1;
-                    o_func_op = 3'b001;
+                3'b110: begin 
+                    if (funct7 == 7'b0000000) begin // OR
+                        o_op_mode = 1;
+                        o_func_op = 3'b001;
+                    end
+                    else if (funct7 == 7'b0000001) begin // REM
+                        o_op_mode = 7;
+                        o_func_op = 3'b000;
+                    end
                 end
                 3'b111: begin // AND
                     o_op_mode = 1;
