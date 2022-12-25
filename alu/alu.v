@@ -25,6 +25,7 @@ localparam COMPARE     = 3;
 localparam INT_ADD_SUB = 4;
 localparam INT_MUL     = 5;
 localparam INT_DIV     = 6;
+localparam INT_MOD     = 7;
 
 // registers & wires -------------------------------------------------
 // sub-module ports
@@ -122,7 +123,7 @@ assign int_div_i_b = i_b;
 
 // i_valid control
 assign is_mode_mul = (i_op_mode == INT_MUL);
-assign is_mode_div = (i_op_mode == INT_DIV);
+assign is_mode_div = (i_op_mode == INT_DIV || i_op_mode == INT_MOD);
 assign int_mul_i_valid = (is_mode_mul ^ delayed_int_mul_mode);
 assign int_div_i_valid = (is_mode_div ^ delayed_int_div_mode);
 
@@ -143,7 +144,8 @@ always @(*) begin
 	COMPARE:     result_select = comp_o_result;
 	INT_ADD_SUB: result_select = int_add_sub_o_result;
 	INT_MUL:     result_select = int_mul_o_result;
-	INT_DIV:     result_select = int_div_o_result;
+	INT_DIV:     result_select = int_div_o_quotient;
+	INT_MOD:     result_select = int_div_o_remainder;
 	default:     result_select = i_a;
     endcase
 
