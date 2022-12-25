@@ -1,19 +1,19 @@
 module inst_dec(
     input [31:0] i_inst_data,
-    output [4:0] o_rd,
-    output [4:0] o_rs1,
-    output [4:0] o_rs2,
-    output [31:0] o_imm,
-    output [2:0] o_funct3,
-    output o_alusrc,
-    output o_mem_to_reg,
-    output o_reg_write,
-    output o_mem_read,
-    output o_mem_write,
-    output o_branch,
-    output [2:0] o_op_mode,
-    output [2:0] o_func_op,
-    output o_fp_mode
+    output reg [4:0] o_rd,
+    output reg [4:0] o_rs1,
+    output reg [4:0] o_rs2,
+    output reg [31:0] o_imm,
+    output reg [2:0] o_funct3,
+    output reg o_alusrc,
+    output reg o_mem_to_reg,
+    output reg o_reg_write,
+    output reg o_mem_read,
+    output reg o_mem_write,
+    output reg o_branch,
+    output reg [2:0] o_op_mode,
+    output reg [2:0] o_func_op,
+    output reg o_fp_mode
 );
 
 //----------OP Code--------------------------//
@@ -37,6 +37,7 @@ parameter E_OP      = 7'b1110011;   // ECALL EBREAK
 // RV32A XXX
 
 // RV32F
+/*
 parameter FLW_OP    = 7'b0000111;
 parameter FSW_OP    = 7'b0100111;
 parameter FMADD.S_OP    = 7'b1000011;
@@ -44,7 +45,7 @@ parameter FMSUB.S_OP    = 7'b1000111;
 parameter FNMSUB.S_OP   = 7'b1001011;
 parameter FNMADD.S_OP   = 7'b1001111;
 parameter F_OP      = 7'b1010011;    // F~
-
+*/
 // RV32D
 
 //-----------Instruction Set-------------//
@@ -60,11 +61,10 @@ assign rs1    = i_inst_data[19:15];
 assign rs2    = i_inst_data[24:20];
 assign funct7 = i_inst_data[31:25];
 
-assign o_funct3 = funct3;
-
 
 //----------decoder---------//
 always@(*) begin
+    o_funct3 = funct3;
     case (opcode)
         // RV32I
         LUI_OP: begin // notice
