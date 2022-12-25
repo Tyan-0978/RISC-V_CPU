@@ -51,6 +51,7 @@ parameter F_OP      = 7'b1010011;    // F~
 
 //-----------Instruction Set-------------//
 wire [6:0] opcode;
+wire [4:0] rd, rs1, rs2;
 wire [2:0] funct3;
 wire [6:0] funct7;
 
@@ -214,6 +215,7 @@ always@(*) begin
                 3'b000: begin //ADDI
                     o_op_mode = 4;
                     o_func_op = 3'b000;
+		    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
                 end
                 3'b010: begin //SLTI set less then immediate
                     o_op_mode = 3;
@@ -263,7 +265,7 @@ always@(*) begin
             o_rs1 = rs1;
             o_rs2 = 5'b00000;
             o_alusrc = 1;
-            o_mem_to_reg = 1;
+            o_mem_to_reg = 0;
             o_reg_write = 1;
             o_mem_read = 1;
             o_mem_write = 0;
