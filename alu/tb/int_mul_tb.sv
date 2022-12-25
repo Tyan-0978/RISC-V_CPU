@@ -59,9 +59,9 @@ initial begin
     rst_n = 1;
     #(5*CLK)
 
+    @(negedge clk)
     for (int i = 1; i <= num_tests; i++) begin
         rin.randomize();
-        @(negedge clk)
         a <= rin.a;
         b <= rin.b;
         in_valid <= 1;
@@ -70,14 +70,15 @@ initial begin
         expected = a * b;
 
         @(posedge out_valid);
-	while (!out_valid) @(negedge clk);
+	//while (!out_valid) @(negedge clk);
+	@(negedge clk);
         if (result !== expected) begin
             $display("Error on test %0d", i);
             $display("a = %d, b = %d, result = %d, expected = %d" , a, b, result, expected);
 	    $display("");
             err_count = err_count + 1;
         end
-        //@(negedge clk);
+        //repeat (5) @(negedge clk);
     end
 
     $display("================================================================================");
