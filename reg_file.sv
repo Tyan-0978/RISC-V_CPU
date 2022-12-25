@@ -13,8 +13,8 @@ module reg_file(
 reg  [31:0] registers [0:31];
 reg  [31:0] next_registers [0:31];
 
-assign rs1_data = registers[read_rs1];
-assign rs2_data = registers[read_rs2];
+assign o_rs1_data = registers[i_read_rs1];
+assign o_rs2_data = registers[i_read_rs2];
 
 always_comb begin
     // next registers
@@ -25,7 +25,7 @@ always_comb begin
     end
 end
 
-always_ff begin
+always_ff @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
         for (int i = 0; i < 32; i++) registers[i] <= 0;
     end else begin

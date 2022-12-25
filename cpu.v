@@ -23,24 +23,28 @@ reg  [31:0] pc, next_pc;
 
 // instruction decoding stage
 wire [31:0] id_i_inst_data;
-reg  [ 4:0] id_o_rd, id_o_rs1, id_o_rs2
+wire [ 4:0] id_o_rd, id_o_rs1, id_o_rs2;
 reg  [ 4:0] id_rd, id_rs1, id_rs2;
 reg  [ 4:0] next_id_rd, next_id_rs1, next_id_rs2;
-reg  [31:0] id_imm, id_o_imm, next_id_imm;
-reg  [31:0] id_jump_imm, id_o_jump_imm, next_id_jump_imm;
-reg  [ 2:0] id_funct3, id_o_funct3, next_id_funct3;
-reg  id_o_alusrc, id_o_mem_to_reg, id_o_reg_write;
+wire [31:0] id_o_imm;
+reg  [31:0] id_imm, next_id_imm;
+wire [31:0] id_o_jump_imm;
+reg  [31:0] id_jump_imm, next_id_jump_imm;
+wire [ 2:0] id_o_funct3;
+reg  [ 2:0] id_funct3, next_id_funct3;
+wire id_o_alusrc, id_o_mem_to_reg, id_o_reg_write;
 reg  id_alusrc, id_mem_to_reg, id_reg_write;
 reg  next_id_alusrc, next_id_mem_to_reg, next_id_reg_write;
-reg  id_o_mem_read, id_o_mem_write, id_o_branch;
+wire id_o_mem_read, id_o_mem_write, id_o_branch;
 reg  id_mem_read, id_mem_write, id_branch;
 reg  next_id_mem_read, next_id_mem_write, next_id_branch;
-reg  [2:0] id_o_op_mode, id_o_func_op;
+wire [2:0] id_o_op_mode, id_o_func_op;
 reg  [2:0] id_op_mode, id_func_op, next_id_op_mode, next_id_func_op;
-reg  id_fp_mode, id_o_fp_mode, next_id_fp_mode;
+wire id_o_fp_mode;
+reg  id_fp_mode, next_id_fp_mode;
 
 // register file stage
-wire rf_i_reg_write,
+wire rf_i_reg_write;
 wire [ 4:0] rf_i_write_rd;
 wire [31:0] rf_i_write_data;
 wire [ 4:0] rf_i_read_rs1;
@@ -93,15 +97,16 @@ wire wb_mem_to_reg, wb_reg_write;
 wire wb_reg_write_data;
 
 // output assignments
-assign o_ecall_ready = 
-assign o_ecall_data = 
+// TODO
+assign o_ecall_ready = 0;
+assign o_ecall_data = 0;
 
 // -------------------------------------------------------------------
 // CPU top control
 // -------------------------------------------------------------------
-assign nop = has_branch | has_jump;
-assign stall_all = alu_o_stall, dmm_stall;
-assign has_branch = id_o_branch | id_branch | rf_branch;
+assign nop = (has_branch | has_jump);
+assign stall_all = (alu_o_stall | dmm_out_stall);
+assign has_branch = (id_o_branch | id_branch | rf_branch);
 assign has_jump = (id_o_branch & (id_o_op_mode == 4)) |
                   (id_branch & (id_op_mode == 4)) |
                   (rf_branch & (rf_op_mode == 4));
@@ -139,7 +144,7 @@ end
 inst_dec inst_dec0 (
     .i_inst_data(id_i_inst_data),
     .o_rd(id_o_rd), .o_rs1(id_o_rs1), .o_rs2(id_o_rs2),
-    .o_imm(id_o_imm), o_jump_imm(id_o_jump_imm),
+    .o_imm(id_o_imm), .o_jump_imm(id_o_jump_imm),
     .o_funct3(id_o_funct3),
     .o_alusrc(id_o_alusrc), 
     .o_mem_to_reg(id_o_mem_to_reg), 
@@ -232,7 +237,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         id_mem_read <= next_id_mem_read;
         id_mem_write <= next_id_mem_write;
         id_branch <= next_id_branch;
-        next_idp_mode <= next_id_op_mode;
+        id_op_mode <= next_id_op_mode;
         id_func_op <= next_id_func_op;
         id_fp_mode <= next_id_fp_mode;
     end
