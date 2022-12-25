@@ -53,8 +53,6 @@ always@(*) begin
     if (!avm_waitrequest) begin
         case (state_r)
             S_WAIT_CALCULATE: begin
-                ref_w = ref_r;
-                read_w = read_r;
                 avm_read_w = 1;
                 avm_write_w = 0;
                 calculation_start_w = 0;
@@ -72,8 +70,6 @@ always@(*) begin
             
             S_SEND_RESULT: begin
                 if (avm_address_r == STATUS_BASE) begin
-                    ref_w = ref_r;
-                    read_w = 0;
                     result_w = result_r;
                     state_w = state_r;
                     bytes_counter_w = bytes_counter_r;
@@ -85,8 +81,6 @@ always@(*) begin
                 end
 
                 else if (avm_address_r == TX_BASE) begin
-                    ref_w = ref_r;
-                    read_w = 0;
                     calculation_start_w = 0;
                     StartRead(STATUS_BASE);
                     if (bytes_counter_r == 30) begin
@@ -101,8 +95,6 @@ always@(*) begin
                     end
                 end
                 else begin 
-                    ref_w = ref_r;
-                    read_w = read_r;
                     result_w = result_r;
                     avm_write_w = avm_write_r;
                     state_w = state_r;
@@ -117,8 +109,6 @@ always@(*) begin
     end
 
     else if ((state_r == S_WAIT_CALCULATE) && avm_waitrequest) begin
-        ref_w = ref_r;
-        read_w = read_r;
         avm_read_w = 1;
         avm_write_w = 0;
         calculation_start_w = 0;
@@ -135,8 +125,6 @@ always@(*) begin
     end
     
     else begin
-        ref_w = ref_r;
-        read_w = read_r;
         result_w = result_r;
         avm_read_w = avm_read_r;
         avm_write_w = avm_write_r;
@@ -149,8 +137,6 @@ end
 
 always @(posedge avm_clk or posedge avm_rst) begin
     if (avm_rst) begin
-        ref_r <= 0;
-        read_r <= 0;
         result_r <= 0;
         avm_address_r <= STATUS_BASE;
         avm_read_r <= 1;
@@ -159,8 +145,6 @@ always @(posedge avm_clk or posedge avm_rst) begin
         bytes_counter_r <= 0;
         calculation_start_r <= 0;
     end else begin
-        ref_r <= ref_w;
-        read_r <= read_w;
         result_r <= result_w;
         avm_address_r <= avm_address_w;
         avm_read_r <= avm_read_w;

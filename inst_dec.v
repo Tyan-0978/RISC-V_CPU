@@ -66,11 +66,11 @@ assign funct7 = i_inst_data[31:25];
 //----------decoder---------//
 always@(*) begin
     o_funct3 = funct3;
-    
+
     if (opcode == JAL_OP)
         o_jump_imm = {11'd0, i_inst_data[31], i_inst_data[19:12], i_inst_data[20], i_inst_data[30:21], 1'b0};
     else if (opcode == JALR_OP && funct3 == 3'b000)
-        o_jump_imm = {20'd0, i_inst_data[31:20]};
+        o_jump_imm = {20'd1, i_inst_data[31:20]};
     else 
         o_jump_imm = 0;
     
