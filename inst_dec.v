@@ -67,38 +67,77 @@ assign o_funct3 = funct3;
 always@(*) begin
     case (opcode)
         // RV32I
-        LUI_OP: begin
-            o_op_mode = 3'b000;
+        LUI_OP: begin // notice
+            o_op_mode = 0;
             o_func_op = 3'b000;
             o_fp_mode = 0;
             o_rd = rd;
             o_rs1 = 5'b00000;
             o_rs2 = 5'b00000;
-            o_imm = {i_inst_data[31:12], 12'b0};
+            o_imm = {i_inst_data[31:12], 12'd0};
+            o_alusrc = 1;
+            o_mem_to_reg = 0;
+            o_reg_write = 1;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 0;
         end
         AUIPC_OP: begin // TB Checked
-            o_op_mode = 3'b000;
+            o_op_mode = 0;
             o_func_op = 3'b000;
             o_fp_mode = 0;
             o_rd = rd;
             o_rs1 = 5'b00000;
             o_rs2 = 5'b00000;
-            o_imm = {i_inst_data[31:12], 12'b0};
+            o_imm = {i_inst_data[31:12], 12'd0};
+            o_alusrc = 1;
+            o_mem_to_reg = 0;
+            o_reg_write = 1;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 1;
         end
         JAL_OP: begin //TB Checked
+            o_op_mode = 0;
+            o_func_op = 3'b000;
+            o_fp_mode = 0;
+            o_rd = rd;
+            o_rs1 = rs1;
+            o_rs2 = 5'b00000;
+            o_imm = {11'd0, i_inst_data[31], i_inst_data[19:12], i_inst_data[20], i_inst_data[30:21], 1'b0};
+            o_alusrc = 1;
+            o_mem_to_reg = 0;
+            o_reg_write = 1;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 1;
+        end 
+        JALR_OP: begin //TB checked
             if (funct3 == 3'b000) begin
-                o_op_mode = 3'b000;
+                o_op_mode = 4;
                 o_func_op = 3'b000;
                 o_fp_mode = 0;
                 o_rd = rd;
                 o_rs1 = rs1;
-                o_rs2 = 5'b00000;
-                o_imm = {11'd0, i_inst_data[31], i_inst_data[19:12], i_inst_data[20], i_inst_data[30:21], 1'b0};
+                o_rs2 = 0;
+                o_imm = {20'd0, i_inst_data[31:20]};
             end
-        end 
-        JALR_OP: begin
-            
-
+            else begin // something wrong
+                o_op_mode = 0;
+                o_func_op = 3'b000;
+                o_fp_mode = 0;
+                o_rd = 0;
+                o_rs1 = 0;
+                o_rs2 = 0;
+                o_imm = 0;
+            end
+            o_alusrc = 1;
+            o_mem_to_reg = 0;
+            o_reg_write = 1;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 1;
+        end
         B_type_OP: begin
             o_op_mode = 3;
             case (funct3) 
@@ -114,12 +153,20 @@ always@(*) begin
                     o_func_op = 3'b000;
                 3'b111: //BGEU (currently do the same thing as BGE)
                     o_func_op = 3'b011;
+                default:
+                    o_func_op = 0;
             endcase
             o_fp_mode = 0;
             o_rd = 5'b00000;
             o_rs1 = rs1;
             o_rs2 = rs2;
-            o_imm = {i_inst_data[31], i_inst_data[7], i_inst_data[30:25], i_inst_data[11:8], };
+            o_imm = {20'd0, i_inst_data[31], i_inst_data[7], i_inst_data[30:25], i_inst_data[11:8], 1'b0};
+            o_alusrc = 0;
+            o_mem_to_reg = 0;
+            o_reg_write = 0;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 1;
         end
         LOAD_OP: begin
             o_op_mode = 4;
@@ -129,8 +176,13 @@ always@(*) begin
             o_rs1 = rs1;
             o_rs2 = 5'b00000;
             o_imm = {20'd0, i_inst_data[31:20]};
+            o_alusrc = 1;
+            o_mem_to_reg = 1;
+            o_reg_write = 1;
+            o_mem_read = 1;
+            o_mem_write = 0;
+            o_branch = 0;
         end
-
         STORE_OP: begin
             o_op_mode = 4;
             o_func_op = 3'b000;
@@ -138,7 +190,13 @@ always@(*) begin
             o_rd = 5'b00000;
             o_rs1 = rs1;
             o_rs2 = rs2;
-            o_imm = {20'd0, i_inst_data[31:25], i_inst_data[11:7]}
+            o_imm = {20'd0, i_inst_data[31:25], i_inst_data[11:7]};
+            o_alusrc = 1;
+            o_mem_to_reg = 0;
+            o_reg_write = 0;
+            o_mem_read = 0;
+            o_mem_write = 1;
+            o_branch = 0;
         end
         I_TYPE_OP: begin
             case (funct3) 
@@ -184,11 +242,21 @@ always@(*) begin
                         o_func_op = 3'b000;
                     end
                 end
+                default: begin
+                    o_op_mode = 0;
+                    o_func_op = 0;
+                end
             endcase 
             o_fp_mode = 0;
             o_rd = rd;
             o_rs1 = rs1;
-            o_rs2 = 5'b00000;   
+            o_rs2 = 5'b00000;
+            o_alusrc = 1;
+            o_mem_to_reg = 1;
+            o_reg_write = 1;
+            o_mem_read = 1;
+            o_mem_write = 0;
+            o_branch = 0; 
         end
         R_TYPE_OP: begin
             case(funct3) 
@@ -237,6 +305,10 @@ always@(*) begin
                         o_op_mode = 6;
                         o_func_op = 3'b000;
                     end
+                    else begin // something wrong
+                        o_op_mode = 0;
+                        o_func_op = 3'b000;
+                    end
                 end
                 3'b101: begin
                     if (funct7 == 7'b0000000) begin //SRL
@@ -261,9 +333,17 @@ always@(*) begin
                         o_op_mode = 7;
                         o_func_op = 3'b000;
                     end
+                    else begin // something wrong
+                        o_op_mode = 0;
+                        o_func_op = 3'b000;
+                    end
                 end
                 3'b111: begin // AND
                     o_op_mode = 1;
+                    o_func_op = 3'b000;
+                end
+                default: begin
+                    o_op_mode = 0;
                     o_func_op = 3'b000;
                 end
             endcase
@@ -271,14 +351,17 @@ always@(*) begin
             o_rd = rd;
             o_rs1 = rs1;
             o_rs2 = rs2;
+            o_alusrc = 0;
+            o_mem_to_reg = 0;
+            o_reg_write = 1;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 0;
         end
-
         // FENCE_OP:
-
         E_OP: begin
             
         end
-
 
         // RV32F
         /*
@@ -297,6 +380,21 @@ always@(*) begin
         F_OP:
 
         */
+        default: begin
+            o_op_mode = 0;
+            o_func_op = 0;
+            o_fp_mode = 0;
+            o_rd = 0;
+            o_rs1 = 0;
+            o_rs2 = 0;
+            o_imm = 0;
+            o_alusrc = 0;
+            o_mem_to_reg = 0;
+            o_reg_write = 0;
+            o_mem_read = 0;
+            o_mem_write = 0;
+            o_branch = 0;
+        end
     endcase
 
 end
