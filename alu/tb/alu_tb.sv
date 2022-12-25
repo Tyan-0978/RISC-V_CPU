@@ -68,12 +68,12 @@ alu alu0 (
 );
 
 initial begin
-    $fsdbDumpfile("test_int_mul.fsdb");
+    $fsdbDumpfile("wave_alu.fsdb");
     $fsdbDumpvars;
 
     // test settings
     test_int_add_sub = 0;
-    test_int_mul = 0;
+    test_int_mul = 1;
     test_int_div = 0;
 
     // reset
@@ -145,9 +145,9 @@ initial begin
 	$display("Start integer multiplication test");
 	$display("======================================================================");
 	err_count = 0;
+	@(negedge clk)
 	for (int i = 1; i <= num_tests; i++) begin
 	    rin.randomize();
-	    @(negedge clk)
 	    op_mode <= INT_MUL;
 	    a <= rin.a;
 	    b <= rin.b;
@@ -156,7 +156,10 @@ initial begin
 	    //op_mode <= IDLE;
 	    expected = a * b;
 
-	    while (out_stall) @(negedge clk);
+	    //while (out_stall) @(negedge clk);
+	    @(negedge out_stall);
+	    @(negedge clk);
+	    @(negedge clk);
 	    if (result !== expected) begin
 		$display("Error on test %0d", i);
 		$display("a = %d, b = %d, result = %d, expected = %d" , a, b, result, expected);
