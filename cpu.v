@@ -94,7 +94,7 @@ reg  dmm_mem_to_reg, dmm_reg_write;
 wire [ 4:0] wb_rd;
 wire [31:0] wb_alu_out;
 wire wb_mem_to_reg, wb_reg_write;
-wire wb_reg_write_data;
+wire [31:0] wb_reg_write_data;
 
 // output assignments
 // TODO
@@ -249,8 +249,8 @@ end
 assign rf_i_reg_write = wb_reg_write;
 assign rf_i_write_rd = wb_rd;
 assign rf_i_write_data = wb_reg_write_data;
-assign i_read_rs1 = id_rs1;
-assign i_read_rs2 = id_rs2;
+assign rf_i_read_rs1 = id_rs1;
+assign rf_i_read_rs2 = id_rs2;
 
 reg_file reg_file0 (
     .i_rst_n(i_rst_n), .i_clk(i_clk),
