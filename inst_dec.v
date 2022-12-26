@@ -160,17 +160,17 @@ always@(*) begin
             o_op_mode = 3;
             case (funct3) 
                 3'b000: //BEQ
-                    o_func_op = 3'b101;
+                    o_func_op = 3'b110;
                 3'b001: //BNE
-                    o_func_op = 3'b100;
+                    o_func_op = 3'b010;
                 3'b100: //BLT
                     o_func_op = 3'b000;
                 3'b101: //BGE
-                    o_func_op = 3'b011;
+                    o_func_op = 3'b101;
                 3'b110: //BLTU (currently do the same thing as BLT)
                     o_func_op = 3'b000;
                 3'b111: //BGEU (currently do the same thing as BGE)
-                    o_func_op = 3'b011;
+                    o_func_op = 3'b101;
                 default:
                     o_func_op = 0;
             endcase
