@@ -1,6 +1,7 @@
 module reg_file(
     input  i_rst_n,
     input  i_clk,
+    input  i_stall,
     input  i_reg_write,
     input  [ 4:0] i_write_rd,
     input  [31:0] i_write_data,
@@ -20,11 +21,12 @@ assign o_rs2_data = rs2_data;
 
 always_comb begin
     // next output
-    next_rs1_data = (i_write_rd == i_read_rs1) ? 
-                     i_write_data : registers[i_read_rs1];
-    next_rs2_data = (i_write_rd == i_read_rs2) ? 
-                     i_write_data : registers[i_read_rs2];
-    next_rs2_data = registers[i_read_rs2];
+    next_rs1_data = (i_stall) ? rs1_data : (
+                    (i_write_rd == i_read_rs1) ? 
+                     i_write_data : registers[i_read_rs1]);
+    next_rs2_data = (i_stall) ? rs2_data : (
+                    (i_write_rd == i_read_rs2) ? 
+                     i_write_data : registers[i_read_rs2]);
     // next registers
     next_registers[0] = 0; // reserved
     for (int i = 1; i < 32; i++) begin
