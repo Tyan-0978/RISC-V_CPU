@@ -22,7 +22,7 @@ logic [31:0] scan_inst;
 
 cpu cpu0 (
     .i_rst_n(rst_n), .i_clk(clk), .i_start(start),
-    .id_i_inst_data(inst),
+    .i_inst(inst),
     .o_ecall_ready(),
     .o_ecall_data()
 );
