@@ -55,7 +55,9 @@ wire i_start;
 
 // CPU top control
 reg [1:0] state, next_state;
-wire nop, stall_all, has_branch, has_jump;
+reg  nop;
+wire next_nop;
+wire stall_all, has_branch, has_jump;
 wire fw_alu_rs1, fw_alu_rs2;
 wire fw_dmm_rs1, fw_dmm_rs2;
 reg  ecall_ready, next_ecall_ready;
@@ -71,6 +73,7 @@ wire [ 3:0] im_sdram_byteenable_n;
 wire im_sdram_chipselect;
 wire im_sdram_read_n, im_sdram_write_n;
 wire [31:0] im_sdram_writedata, im_sdram_readdata;
+wire [31:0] im_o_read_data;
 wire im_sdram_readdatavalid;
 wire im_sdram_waitrequest;
 
@@ -209,9 +212,14 @@ always @(posedge i_clk or negedge i_rst_n) begin
 end
 
 // CPU control
-assign nop = (has_branch | has_jump);
+assign next_nop = (has_branch | has_jump);
+always @(posedge i_clk or negedge i_rst_n) begin
+    if (!i_rst_n) nop <= 0;
+    else          nop <= next_nop;
+end
+
 assign stall_all = (alu_o_stall | dmm_out_stall);
-assign has_branch = (id_branch | rf_branch);
+assign has_branch = (id_o_branch | id_branch | rf_branch);
 assign has_jump = (id_branch & (id_op_mode == 4)) |
                   (rf_branch & (rf_op_mode == 4));
 assign fw_alu_rs1 = alu_reg_write & (alu_rd == rf_rs1);
@@ -226,11 +234,12 @@ always @(*) begin
     case (state) 
         IDLE: next_pc = 0;
         EXEC: begin
-            if (nop | stall_all | id_o_ecall) next_pc = pc;
+            if (stall_all | id_o_ecall) next_pc = pc;
             else begin
                 if (branch_success)     next_pc = alu_branch_pc;
                 else if (alu_jal_mode)  next_pc = alu_jal_pc;
                 else if (alu_jalr_mode) next_pc = alu_jalr_pc;
+                else if (nop)           next_pc = pc;
                 else                    next_pc = pc + 1;
             end
         end
@@ -259,7 +268,7 @@ assign im_writedata = 32'd0;
 
 inst_mem inst_mem0 (
     .i_read_addr(im_sdram_address),
-    .o_read_data(id_i_inst_data)
+    .o_read_data(im_o_read_data)
 );
 /*
 sdram sdram0(
@@ -289,6 +298,7 @@ sdram sdram0(
 assign DRAM_ADDR = pc[12:0];
 //assign id_i_inst_data = im_sdram_readdata;
 //assign id_i_inst_data = DRAM_DQ;
+assign id_i_inst_data = (nop) ? 0 : im_o_read_data;
 
 inst_dec inst_dec0 (
     .i_inst_data(id_i_inst_data),
@@ -323,8 +333,8 @@ always @(*) begin
         next_id_branch = 0;
         next_id_op_mode = 0;
         next_id_func_op = 0;
-        next_id_fp_mode = 0;*/
-    if (stall_all) begin
+        next_id_fp_mode = 0;
+    end else */if (stall_all) begin
         next_id_rd = id_rd; 
         next_id_rs1 = id_rs1;
         next_id_rs2 = id_rs2;
@@ -548,7 +558,7 @@ alu alu0 (
 assign branch_success = (alu_branch & (alu_op_mode == 3) & alu_o_result[0]);
 assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
 assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
-assign alu_branch_pc = $signed(pc) + $signed(alu_imm[31:2]);
+assign alu_branch_pc = $signed(pc) + $signed(alu_imm[31:2]) - 1;
 assign alu_jal_pc = $signed(pc) + $signed(alu_jump_imm[20:2]);
 assign alu_jalr_pc = $signed(alu_rs1_data) + $signed(alu_jump_imm[11:0]);
 
