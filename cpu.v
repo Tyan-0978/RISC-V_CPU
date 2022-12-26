@@ -33,6 +33,8 @@ wire [31:0] id_o_jump_imm;
 reg  [31:0] id_jump_imm, next_id_jump_imm;
 wire [ 2:0] id_o_funct3;
 reg  [ 2:0] id_funct3, next_id_funct3;
+wire id_o_ecall;
+reg  id_ecall, next_id_ecall;
 wire id_o_alusrc, id_o_mem_to_reg, id_o_reg_write;
 reg  id_alusrc, id_mem_to_reg, id_reg_write;
 reg  next_id_alusrc, next_id_mem_to_reg, next_id_reg_write;
@@ -56,6 +58,7 @@ wire [31:0] rf_o_rs2_data;
 reg  [ 4:0] rf_rd, rf_rs1, rf_rs2;
 reg  [31:0] rf_imm, rf_jump_imm;
 reg  [ 2:0] rf_funct3;
+reg  rf_ecall;
 reg  rf_alusrc, rf_mem_to_reg, rf_reg_write;
 reg  rf_mem_read, rf_mem_write, rf_branch;
 reg  [2:0] rf_op_mode, rf_func_op;
@@ -97,11 +100,6 @@ wire [ 4:0] wb_rd;
 wire [31:0] wb_alu_out;
 wire wb_mem_to_reg, wb_reg_write;
 wire [31:0] wb_reg_write_data;
-
-// output assignments
-// TODO
-assign o_ecall_ready = 0;
-assign o_ecall_data = 0;
 
 // -------------------------------------------------------------------
 // CPU top control
@@ -150,6 +148,7 @@ inst_dec inst_dec0 (
     .o_rd(id_o_rd), .o_rs1(id_o_rs1), .o_rs2(id_o_rs2),
     .o_imm(id_o_imm), .o_jump_imm(id_o_jump_imm),
     .o_funct3(id_o_funct3),
+    .o_ecall(id_o_ecall),
     .o_alusrc(id_o_alusrc), 
     .o_mem_to_reg(id_o_mem_to_reg), 
     .o_reg_write(id_o_reg_write),
@@ -168,6 +167,7 @@ always @(*) begin
         next_id_imm = 0;
         next_id_jump_imm = 0;
         next_id_funct3 = 0;
+        next_id_ecall = 0;
         next_id_alusrc = 0;
         next_id_mem_to_reg = 0;
         next_id_reg_write = 0;
@@ -199,6 +199,7 @@ always @(*) begin
         next_id_imm = id_o_imm;
         next_id_jump_imm = id_o_jump_imm;
         next_id_funct3 = id_o_funct3;
+        next_id_ecall = id_o_ecall;
         next_id_alusrc = id_o_alusrc;
         next_id_mem_to_reg = id_o_mem_to_reg;
         next_id_reg_write = id_o_reg_write;
@@ -219,6 +220,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         id_imm <= 0;
         id_jump_imm <= 0;
         id_funct3 <= 0;
+        id_ecall <= 0;
         id_alusrc <= 0;
         id_mem_to_reg <= 0;
         id_reg_write <= 0;
@@ -235,6 +237,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         id_imm <= next_id_imm;
         id_jump_imm <= next_id_jump_imm;
         id_funct3 <= next_id_funct3;
+        id_ecall <= next_id_ecall;
         id_alusrc <= next_id_alusrc;
         id_mem_to_reg <= next_id_mem_to_reg;
         id_reg_write <= next_id_reg_write;
@@ -272,6 +275,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         rf_imm <= 0;
         rf_jump_imm <= 0;
         rf_funct3 <= 0;
+        rf_ecall <= 0;
         rf_alusrc <= 0;
         rf_mem_to_reg <= 0;
         rf_reg_write <= 0;
@@ -288,6 +292,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         rf_imm <= id_imm;
         rf_jump_imm <= id_jump_imm;
         rf_funct3 <= id_funct3;
+        rf_ecall <= id_ecall;
         rf_alusrc <= id_alusrc;
         rf_mem_to_reg <= id_mem_to_reg;
         rf_reg_write <= id_reg_write;
@@ -303,6 +308,9 @@ end
 // -------------------------------------------------------------------
 // ALU stage 
 // -------------------------------------------------------------------
+assign o_ecall_ready = rf_ecall;
+assign o_ecall_data = (rf_ecall) ? rf_o_rs1_data : 0;
+
 assign branch_success = (alu_branch & alu_o_result[0]);
 assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
 assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
