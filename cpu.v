@@ -119,7 +119,7 @@ assign fw_dmm_rs2 = dmm_reg_write & (dmm_rd == rf_rs2);
 // program counter stage
 // -------------------------------------------------------------------
 always @(*) begin
-    if (nop) begin
+    if (nop | stall_all) begin
         next_pc = pc;
     end else begin
         if (branch_success | alu_jal_mode | alu_jalr_mode) begin
