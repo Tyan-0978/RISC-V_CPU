@@ -66,7 +66,7 @@ assign LEDG[1:0] = {state,ecall_ready};
 reg  [31:0] pc, next_pc;
 
 // instruction decoding stage
-wire [24:0] im_sdram_address;
+wire [31:0] im_sdram_address;
 wire [ 3:0] im_sdram_byteenable_n;
 wire im_sdram_chipselect;
 wire im_sdram_read_n, im_sdram_write_n;
@@ -250,12 +250,17 @@ end
 // -------------------------------------------------------------------
 // instruction decoding stage
 // -------------------------------------------------------------------
-assign im_sdram_address = pc[24:0];
+assign im_sdram_address = pc;
 assign im_sdram_byteenable_n = 4'd0;
 assign im_sdram_chipselect = 0;
 assign im_sdram_read_n = 0;
 assign im_sdram_write_n = 1;
 assign im_writedata = 32'd0;
+
+inst_mem inst_mem0 (
+    .i_read_addr(im_sdram_address),
+    .o_read_data(id_i_inst_data)
+);
 /*
 sdram sdram0(
     .clocks_ref_clk_clk(i_clk),
@@ -283,7 +288,7 @@ sdram sdram0(
 */
 assign DRAM_ADDR = pc[12:0];
 //assign id_i_inst_data = im_sdram_readdata;
-assign id_i_inst_data = DRAM_DQ;
+//assign id_i_inst_data = DRAM_DQ;
 
 inst_dec inst_dec0 (
     .i_inst_data(id_i_inst_data),
