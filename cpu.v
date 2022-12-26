@@ -351,7 +351,7 @@ alu alu0 (
 
 always @(*) begin
     if (branch_success) begin
-        alu_new_pc = pc + ($signed(alu_imm) >>> 2);
+        alu_new_pc = $signed(pc) + $signed(alu_imm[31:2]);
     end else if (alu_jal_mode) begin
         alu_new_pc = pc + $signed(alu_jump_imm[20:2]);
     end else if (alu_jalr_mode) begin
