@@ -170,8 +170,8 @@ assign i_start = KEY[3];
 always @(*) begin
     case (state)
         IDLE: begin
-            if (start) next_state = EXEC;
-            else       next_state = IDLE;
+            if (i_start) next_state = EXEC;
+            else         next_state = IDLE;
         end
         EXEC: begin
             if (id_o_ecall) next_state = DONE;
@@ -382,7 +382,7 @@ assign rf_i_read_rs1 = id_rs1;
 assign rf_i_read_rs2 = id_rs2;
 
 reg_file reg_file0 (
-    .i_rst_n(i_rst_n), .i_clk(i_clk), i_stall(rf_i_stall),
+    .i_rst_n(i_rst_n), .i_clk(i_clk), .i_stall(rf_i_stall),
     .i_reg_write(rf_i_reg_write),
     .i_write_rd(rf_i_write_rd), .i_write_data(rf_i_write_data),
     .i_read_rs1(rf_i_read_rs1), .i_read_rs2(rf_i_read_rs2),
@@ -579,8 +579,8 @@ always @(posedge i_clk or negedge i_rst_n) begin
         alu_rd <= next_alu_rd; 
         alu_rs1 <= next_alu_rs1;
         alu_rs2 <= next_alu_rs2;
-        alu_rs1_data <= next_alu_o_rs1_data;
-        alu_rs2_data <= next_alu_o_rs2_data;
+        alu_rs1_data <= next_alu_rs1_data;
+        alu_rs2_data <= next_alu_rs2_data;
         alu_imm <= next_alu_imm;
         alu_jump_imm <= next_alu_jump_imm;
         alu_funct3 <= next_alu_funct3;
