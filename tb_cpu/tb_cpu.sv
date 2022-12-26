@@ -54,7 +54,7 @@ initial begin
     end
 
     $fclose(f_inst);
-    @(negedge clk)
+    //@(negedge clk)
     inst <= 0;
     repeat (10) @(negedge clk);
 
