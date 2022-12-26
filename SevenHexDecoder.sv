@@ -27,62 +27,164 @@ parameter D6 = 7'b0000010;
 parameter D7 = 7'b1011000;
 parameter D8 = 7'b0000000;
 parameter D9 = 7'b0010000;
+parameter D10 = 7'b0001000;
+parameter D11 = 7'b0000011;
+parameter D12 = 7'b1000110;
+parameter D13 = 7'b0100001;
+parameter D14 = 7'b0000100;
+parameter D15 = 7'b0001110;
+
 always_comb begin
-	case(i_hex_1)
-		4'h0: begin o_seven_ten_1 = D0; o_seven_one_1 = D0; end
-		4'h1: begin o_seven_ten_1 = D0; o_seven_one_1 = D1; end
-		4'h2: begin o_seven_ten_1 = D0; o_seven_one_1 = D2; end
-		4'h3: begin o_seven_ten_1 = D0; o_seven_one_1 = D3; end
-		4'h4: begin o_seven_ten_1 = D0; o_seven_one_1 = D4; end
-		4'h5: begin o_seven_ten_1 = D0; o_seven_one_1 = D5; end
-		4'h6: begin o_seven_ten_1 = D0; o_seven_one_1 = D6; end
-		4'h7: begin o_seven_ten_1 = D0; o_seven_one_1 = D7; end
-		4'h8: begin o_seven_ten_1 = D0; o_seven_one_1 = D8; end
-		4'h9: begin o_seven_ten_1 = D0; o_seven_one_1 = D9; end
-		4'ha: begin o_seven_ten_1 = D1; o_seven_one_1 = D0; end
-		4'hb: begin o_seven_ten_1 = D1; o_seven_one_1 = D1; end
-		4'hc: begin o_seven_ten_1 = D1; o_seven_one_1 = D2; end
-		4'hd: begin o_seven_ten_1 = D1; o_seven_one_1 = D3; end
-		4'he: begin o_seven_ten_1 = D1; o_seven_one_1 = D4; end
-		4'hf: begin o_seven_ten_1 = D1; o_seven_one_1 = D5; end
+	case(i_rs[7:0])
+		4'h0: o_seven_0 = D0;
+		4'h1: o_seven_0 = D1;
+		4'h2: o_seven_0 = D2;
+		4'h3: o_seven_0 = D3;
+		4'h4: o_seven_0 = D4;
+		4'h5: o_seven_0 = D5;
+		4'h6: o_seven_0 = D6;
+		4'h7: o_seven_0 = D7;
+		4'h8: o_seven_0 = D8;
+		4'h9: o_seven_0 = D9;
+		4'ha: o_seven_0 = D10;
+		4'hb: o_seven_0 = D11;
+		4'hc: o_seven_0 = D12;
+		4'hd: o_seven_0 = D13;
+		4'he: o_seven_0 = D14;
+		4'hf: o_seven_0 = D15;
+	endcase
+
+	case(i_rs[15:8])
+		4'h0: o_seven_1 = D0;
+		4'h1: o_seven_1 = D1;
+		4'h2: o_seven_1 = D2;
+		4'h3: o_seven_1 = D3;
+		4'h4: o_seven_1 = D4;
+		4'h5: o_seven_1 = D5;
+		4'h6: o_seven_1 = D6;
+		4'h7: o_seven_1 = D7;
+		4'h8: o_seven_1 = D8;
+		4'h9: o_seven_1 = D9;
+		4'ha: o_seven_1 = D10;
+		4'hb: o_seven_1 = D11;
+		4'hc: o_seven_1 = D12;
+		4'hd: o_seven_1 = D13;
+		4'he: o_seven_1 = D14;
+		4'hf: o_seven_1 = D15;
 	endcase
 	
-	case(i_hex_2)
-		4'h0: begin o_seven_ten_2 = D0; o_seven_one_2 = D0; end
-		4'h1: begin o_seven_ten_2 = D0; o_seven_one_2 = D1; end
-		4'h2: begin o_seven_ten_2 = D0; o_seven_one_2 = D2; end
-		4'h3: begin o_seven_ten_2 = D0; o_seven_one_2 = D3; end
-		4'h4: begin o_seven_ten_2 = D0; o_seven_one_2 = D4; end
-		4'h5: begin o_seven_ten_2 = D0; o_seven_one_2 = D5; end
-		4'h6: begin o_seven_ten_2 = D0; o_seven_one_2 = D6; end
-		4'h7: begin o_seven_ten_2 = D0; o_seven_one_2 = D7; end
-		4'h8: begin o_seven_ten_2 = D0; o_seven_one_2 = D8; end
-		4'h9: begin o_seven_ten_2 = D0; o_seven_one_2 = D9; end
-		4'ha: begin o_seven_ten_2 = D1; o_seven_one_2 = D0; end
-		4'hb: begin o_seven_ten_2 = D1; o_seven_one_2 = D1; end
-		4'hc: begin o_seven_ten_2 = D1; o_seven_one_2 = D2; end
-		4'hd: begin o_seven_ten_2 = D1; o_seven_one_2 = D3; end
-		4'he: begin o_seven_ten_2 = D1; o_seven_one_2 = D4; end
-		4'hf: begin o_seven_ten_2 = D1; o_seven_one_2 = D5; end
+	case(i_rs[23:16])
+		4'h0: o_seven_2 = D0;
+		4'h1: o_seven_2 = D1;
+		4'h2: o_seven_2 = D2;
+		4'h3: o_seven_2 = D3;
+		4'h4: o_seven_2 = D4;
+		4'h5: o_seven_2 = D5;
+		4'h6: o_seven_2 = D6;
+		4'h7: o_seven_2 = D7;
+		4'h8: o_seven_2 = D8;
+		4'h9: o_seven_2 = D9;
+		4'ha: o_seven_2 = D10;
+		4'hb: o_seven_2 = D11;
+		4'hc: o_seven_2 = D12;
+		4'hd: o_seven_2 = D13;
+		4'he: o_seven_2 = D14;
+		4'hf: o_seven_2 = D15;
 	endcase
 	
-	case(i_hex_3)
-		4'h0: begin o_seven_ten_3 = D0; o_seven_one_3 = D0; end
-		4'h1: begin o_seven_ten_3 = D0; o_seven_one_3 = D1; end
-		4'h2: begin o_seven_ten_3 = D0; o_seven_one_3 = D2; end
-		4'h3: begin o_seven_ten_3 = D0; o_seven_one_3 = D3; end
-		4'h4: begin o_seven_ten_3 = D0; o_seven_one_3 = D4; end
-		4'h5: begin o_seven_ten_3 = D0; o_seven_one_3 = D5; end
-		4'h6: begin o_seven_ten_3 = D0; o_seven_one_3 = D6; end
-		4'h7: begin o_seven_ten_3 = D0; o_seven_one_3 = D7; end
-		4'h8: begin o_seven_ten_3 = D0; o_seven_one_3 = D8; end
-		4'h9: begin o_seven_ten_3 = D0; o_seven_one_3 = D9; end
-		4'ha: begin o_seven_ten_3 = D1; o_seven_one_3 = D0; end
-		4'hb: begin o_seven_ten_3 = D1; o_seven_one_3 = D1; end
-		4'hc: begin o_seven_ten_3 = D1; o_seven_one_3 = D2; end
-		4'hd: begin o_seven_ten_3 = D1; o_seven_one_3 = D3; end
-		4'he: begin o_seven_ten_3 = D1; o_seven_one_3 = D4; end
-		4'hf: begin o_seven_ten_3 = D1; o_seven_one_3 = D5; end
+	case(i_rs[31:24])
+		4'h0: o_seven_3 = D0;
+		4'h1: o_seven_3 = D1;
+		4'h2: o_seven_3 = D2;
+		4'h3: o_seven_3 = D3;
+		4'h4: o_seven_3 = D4;
+		4'h5: o_seven_3 = D5;
+		4'h6: o_seven_3 = D6;
+		4'h7: o_seven_3 = D7;
+		4'h8: o_seven_3 = D8;
+		4'h9: o_seven_3 = D9;
+		4'ha: o_seven_3 = D10;
+		4'hb: o_seven_3 = D11;
+		4'hc: o_seven_3 = D12;
+		4'hd: o_seven_3 = D13;
+		4'he: o_seven_3 = D14;
+		4'hf: o_seven_3 = D15;
+	endcase
+
+	case(i_rs[39:32])
+		4'h0: o_seven_4 = D0;
+		4'h1: o_seven_4 = D1;
+		4'h2: o_seven_4 = D2;
+		4'h3: o_seven_4 = D3;
+		4'h4: o_seven_4 = D4;
+		4'h5: o_seven_4 = D5;
+		4'h6: o_seven_4 = D6;
+		4'h7: o_seven_4 = D7;
+		4'h8: o_seven_4 = D8;
+		4'h9: o_seven_4 = D9;
+		4'ha: o_seven_4 = D10;
+		4'hb: o_seven_4 = D11;
+		4'hc: o_seven_4 = D12;
+		4'hd: o_seven_4 = D13;
+		4'he: o_seven_4 = D14;
+		4'hf: o_seven_4 = D15;
+	endcase
+
+	case(i_rs[47:40])
+		4'h0: o_seven_5 = D0;
+		4'h1: o_seven_5 = D1;
+		4'h2: o_seven_5 = D2;
+		4'h3: o_seven_5 = D3;
+		4'h4: o_seven_5 = D4;
+		4'h5: o_seven_5 = D5;
+		4'h6: o_seven_5 = D6;
+		4'h7: o_seven_5 = D7;
+		4'h8: o_seven_5 = D8;
+		4'h9: o_seven_5 = D9;
+		4'ha: o_seven_5 = D10;
+		4'hb: o_seven_5 = D11;
+		4'hc: o_seven_5 = D12;
+		4'hd: o_seven_5 = D13;
+		4'he: o_seven_5 = D14;
+		4'hf: o_seven_5 = D15;
+	endcase
+
+	case(i_rs[55:48])
+		4'h0: o_seven_6 = D0;
+		4'h1: o_seven_6 = D1;
+		4'h2: o_seven_6 = D2;
+		4'h3: o_seven_6 = D3;
+		4'h4: o_seven_6 = D4;
+		4'h5: o_seven_6 = D5;
+		4'h6: o_seven_6 = D6;
+		4'h7: o_seven_6 = D7;
+		4'h8: o_seven_6 = D8;
+		4'h9: o_seven_6 = D9;
+		4'ha: o_seven_6 = D10;
+		4'hb: o_seven_6 = D11;
+		4'hc: o_seven_6 = D12;
+		4'hd: o_seven_6 = D13;
+		4'he: o_seven_6 = D14;
+		4'hf: o_seven_6 = D15;
+	endcase
+
+	case(i_rs[63:56])
+		4'h0: o_seven_7 = D0;
+		4'h1: o_seven_7 = D1;
+		4'h2: o_seven_7 = D2;
+		4'h3: o_seven_7 = D3;
+		4'h4: o_seven_7 = D4;
+		4'h5: o_seven_7 = D5;
+		4'h6: o_seven_7 = D6;
+		4'h7: o_seven_7 = D7;
+		4'h8: o_seven_7 = D8;
+		4'h9: o_seven_7 = D9;
+		4'ha: o_seven_7 = D10;
+		4'hb: o_seven_7 = D11;
+		4'hc: o_seven_7 = D12;
+		4'hd: o_seven_7 = D13;
+		4'he: o_seven_7 = D14;
+		4'hf: o_seven_7 = D15;
 	endcase
 end
 
