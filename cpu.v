@@ -331,7 +331,7 @@ always @(*) begin
         alu_i_b = rf_imm;
     end else if (fw_alu_rs2) begin
         alu_i_b = alu_o_result;
-    end else if (fw_dmm_rs1) begin
+    end else if (fw_dmm_rs2) begin
         alu_i_b = dmm_alu_out;
     end else begin
         alu_i_b = rf_o_rs2_data;
