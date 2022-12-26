@@ -106,7 +106,7 @@ wire [31:0] wb_reg_write_data;
 // -------------------------------------------------------------------
 assign nop = (has_branch | has_jump);
 assign stall_all = (alu_o_stall | dmm_out_stall);
-assign has_branch = (id_o_branch | id_branch | rf_branch);
+assign has_branch = (id_branch | rf_branch);
 assign has_jump = (id_o_branch & (id_o_op_mode == 4)) |
                   (id_branch & (id_op_mode == 4)) |
                   (rf_branch & (rf_op_mode == 4));
@@ -313,7 +313,7 @@ end
 assign o_ecall_ready = rf_ecall;
 assign o_ecall_data = (rf_ecall) ? rf_o_rs1_data : 0;
 
-assign branch_success = (alu_branch & alu_o_result[0]);
+assign branch_success = (alu_branch & alu_o_result[0]); // TODO
 assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
 assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
 assign alu_i_op_mode = rf_op_mode;
