@@ -15,7 +15,6 @@ localparam STATUS_BASE = 2*4;
 localparam TX_OK_BIT   = 6;
 localparam RX_OK_BIT   = 7;
 
-// Feel free to design your own FSM!
 // localparam S_GET_REFERENCE = 0;
 // localparam S_GET_READ = 1;
 localparam S_WAIT_CALCULATE = 2;

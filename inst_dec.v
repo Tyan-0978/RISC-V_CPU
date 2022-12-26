@@ -4,6 +4,7 @@ module inst_dec(
     output reg [4:0] o_rs1,
     output reg [4:0] o_rs2,
     output reg [31:0] o_imm,
+    output reg [31:0] o_jump_imm,
     output reg [2:0] o_funct3,
     output reg o_alusrc,
     output reg o_mem_to_reg,
@@ -65,6 +66,14 @@ assign funct7 = i_inst_data[31:25];
 //----------decoder---------//
 always@(*) begin
     o_funct3 = funct3;
+    
+    if (opcode == JAL_OP)
+        o_jump_imm = {11'd0, i_inst_data[31], i_inst_data[19:12], i_inst_data[20], i_inst_data[30:21], 1'b0};
+    else if (opcode == JALR_OP && funct3 == 3'b000)
+        o_jump_imm = {20'd0, i_inst_data[31:20]};
+    else 
+        o_jump_imm = 0;
+    
     case (opcode)
         // RV32I
         LUI_OP: begin // notice
@@ -106,7 +115,7 @@ always@(*) begin
             o_rd = rd;
             o_rs1 = rs1;
             o_rs2 = 5'b00000;
-            o_imm = {11'd0, i_inst_data[31], i_inst_data[19:12], i_inst_data[20], i_inst_data[30:21], 1'b0};
+            o_imm = 1;
             o_alusrc = 1;
             o_mem_to_reg = 0;
             o_reg_write = 1;
@@ -122,7 +131,7 @@ always@(*) begin
                 o_rd = rd;
                 o_rs1 = rs1;
                 o_rs2 = 0;
-                o_imm = {20'd0, i_inst_data[31:20]};
+                o_imm = 1;
             end
             else begin // something wrong
                 o_op_mode = 0;
