@@ -1,4 +1,3 @@
-
 // -----------------------------------------------------------------------------
 // RISC-V CPU Core
 // -----------------------------------------------------------------------------
@@ -30,12 +29,29 @@ module cpu (
     output SRAM_UB_N,
     inout  [15:0] SRAM_DQ,
     output [19:0] SRAM_ADDR,
-	 output [8:0] LEDG,
-	 output [17:0] LEDR,
-	 input  [17:0] SW
+    // devices
+    input  [17:0] SW,
+    output [17:0] LEDR,
+    output [ 8:0] LEDG,
+    output [6:0] HEX0,
+    output [6:0] HEX1,
+    output [6:0] HEX2,
+    output [6:0] HEX3,
+    output [6:0] HEX4,
+    output [6:0] HEX5,
+    output [6:0] HEX6,
+    output [6:0] HEX7
 );
 
+localparam IDLE = 0;
+localparam EXEC = 1;
+localparam DONE = 2;
+
 // wires & registers -------------------------------------------------
+wire i_clk;
+wire i_rst_n;
+wire i_start;
+
 // CPU top control
 reg [1:0] state, next_state;
 wire nop, stall_all, has_branch, has_jump;
@@ -81,7 +97,7 @@ wire id_o_fp_mode;
 reg  id_fp_mode, next_id_fp_mode;
 
 // register file stage
-wire rf_i_reg_write;
+wire rf_i_reg_write, rf_i_stall;
 wire [ 4:0] rf_i_write_rd;
 wire [31:0] rf_i_write_data;
 wire [ 4:0] rf_i_read_rs1;
@@ -90,17 +106,20 @@ wire [31:0] rf_o_rs1_data;
 wire [31:0] rf_o_rs2_data;
 
 reg  [ 4:0] rf_rd, rf_rs1, rf_rs2;
+reg  [ 4:0] next_rf_rd, next_rf_rs1, next_rf_rs2;
 reg  [31:0] rf_imm, rf_jump_imm;
-reg  [ 2:0] rf_funct3;
-reg  rf_ecall;
+reg  [31:0] next_rf_imm, next_rf_jump_imm;
+reg  [ 2:0] rf_funct3, next_rf_funct3;
+reg  rf_ecall, next_rf_ecall;
 reg  rf_alusrc, rf_mem_to_reg, rf_reg_write;
+reg  next_rf_alusrc, next_rf_mem_to_reg, next_rf_reg_write;
 reg  rf_mem_read, rf_mem_write, rf_branch;
+reg  next_rf_mem_read, next_rf_mem_write, next_rf_branch;
 reg  [2:0] rf_op_mode, rf_func_op;
-reg  rf_fp_mode;
+reg  [2:0] next_rf_op_mode, next_rf_func_op;
+reg  rf_fp_mode, next_rf_fp_mode;
 
 // ALU stage
-wire branch_success;
-wire alu_jal_mode, alu_jalr_mode;
 wire [2:0] alu_i_op_mode;
 wire [2:0] alu_i_func_op;
 wire alu_i_fp_mode;
@@ -108,7 +127,9 @@ wire alu_i_stall, alu_o_stall;
 reg  [31:0] alu_i_a, alu_i_b;
 wire [31:0] alu_o_result;
 
-reg  [31:0] alu_new_pc;
+wire branch_success;
+wire alu_jal_mode, alu_jalr_mode;
+wire [31:0] alu_branch_pc, alu_jal_pc, alu_jalr_pc;
 
 reg  [ 4:0] alu_rd, alu_rs1, alu_rs2;
 reg  [31:0] alu_rs1_data, alu_rs2_data;
@@ -118,6 +139,14 @@ reg  alu_mem_to_reg, alu_reg_write;
 reg  alu_mem_read, alu_mem_write;
 reg  alu_branch;
 reg  [2:0] alu_op_mode;
+reg  [ 4:0] next_alu_rd, next_alu_rs1, next_alu_rs2;
+reg  [31:0] next_alu_rs1_data, next_alu_rs2_data;
+reg  [31:0] next_alu_imm, next_alu_jump_imm;
+reg  [ 2:0] next_alu_funct3;
+reg  next_alu_mem_to_reg, next_alu_reg_write;
+reg  next_alu_mem_read, next_alu_mem_write;
+reg  next_alu_branch;
+reg  [2:0] next_alu_op_mode;
 
 // data memory stage
 wire dmm_mem_read, dmm_mem_write;
@@ -135,44 +164,54 @@ wire [31:0] wb_alu_out;
 wire wb_mem_to_reg, wb_reg_write;
 wire [31:0] wb_reg_write_data;
 
-wire i_clk;
-wire i_rst_n;
-wire i_start;
+// -------------------------------------------------------------------
+// signal / board interface
+// -------------------------------------------------------------------
 assign i_clk = CLOCK_50;
-assign i_rst_n = SW[0];
-assign i_start = SW[3];
+assign i_rst_n = ~KEY[0];
+assign i_start = KEY[3];
+
+SevenHexDecoder SevenHex0 (
+    .i_rs(ecall_data),
+    .o_seven_0(HEX0),
+    .o_seven_1(HEX1),
+    .o_seven_2(HEX2),
+    .o_seven_3(HEX3),
+    .o_seven_4(HEX4),
+    .o_seven_5(HEX5),
+    .o_seven_6(HEX6),
+    .o_seven_7(HEX7)
+);
 
 // -------------------------------------------------------------------
 // CPU top control
 // -------------------------------------------------------------------
+// FSM
 always @(*) begin
     case (state)
-        0: begin
-            if (i_start) next_state = 1;
-            else         next_state = 0;
+        IDLE: begin
+            if (i_start) next_state = EXEC;
+            else         next_state = IDLE;
         end
-        1: begin
-            if (id_o_ecall) next_state = 2;
-            else          next_state = 1;
+        EXEC: begin
+            if (id_o_ecall) next_state = DONE;
+            else            next_state = EXEC;
         end
-		  2: next_state = 2;
-        default: next_state = 0;
+        DONE: next_state = DONE; // remains DONE until reset
+        default: next_state = IDLE;
     endcase
 end
 
 always @(posedge i_clk or negedge i_rst_n) begin
-    if (!i_rst_n) begin
-        state <= 0;
-    end else begin
-        state <= next_state;
-    end
+    if (!i_rst_n) state <= IDLE;
+    else          state <= next_state;
 end
 
-assign nop = (~state | has_branch | has_jump);
+// CPU control
+assign nop = (has_branch | has_jump);
 assign stall_all = (alu_o_stall | dmm_out_stall);
 assign has_branch = (id_branch | rf_branch);
-assign has_jump = (id_o_branch & (id_o_op_mode == 4)) |
-                  (id_branch & (id_op_mode == 4)) |
+assign has_jump = (id_branch & (id_op_mode == 4)) |
                   (rf_branch & (rf_op_mode == 4));
 assign fw_alu_rs1 = alu_reg_write & (alu_rd == rf_rs1);
 assign fw_alu_rs2 = alu_reg_write & (alu_rd == rf_rs2);
@@ -184,27 +223,19 @@ assign fw_dmm_rs2 = dmm_reg_write & (dmm_rd == rf_rs2);
 // -------------------------------------------------------------------
 always @(*) begin
     case (state) 
-	 1:begin
-        if (nop | stall_all) begin
-            next_pc = pc;
-        end 
-		  else if (id_o_ecall) begin
-				next_pc = pc;
-		  end
-		  else begin
-            if (branch_success | alu_jal_mode | alu_jalr_mode) begin
-                next_pc = alu_new_pc;
-            end else begin
-                next_pc = pc + 1;
+        IDLE: next_pc = 0;
+        EXEC: begin
+            if (nop | stall_all | id_o_ecall) next_pc = pc;
+            else begin
+                if (branch_success)     next_pc = alu_branch_pc;
+                else if (alu_jal_mode)  next_pc = alu_jal_pc;
+                else if (alu_jalr_mode) next_pc = alu_jalr_pc;
+                else                    next_pc = pc + 1;
             end
         end
-    end 
-	 0: begin
-        next_pc = 0;
-    end
-	 2: next_pc = pc;
-	 default: next_pc = 0;
-	 endcase
+        DONE: next_pc = pc;
+        default: next_pc = 0;
+    endcase
 end
 
 always @(posedge i_clk or negedge i_rst_n) begin
@@ -218,7 +249,6 @@ end
 // -------------------------------------------------------------------
 // instruction decoding stage
 // -------------------------------------------------------------------
-// TODO: instruction memory
 assign im_sdram_address = pc[24:0];
 assign im_sdram_byteenable_n = 4'd0;
 assign im_sdram_chipselect = 0;
@@ -285,13 +315,15 @@ always @(*) begin
         next_id_branch = 0;
         next_id_op_mode = 0;
         next_id_func_op = 0;
-        next_id_fp_mode = 0;
-    end else if (stall_all) begin
+        next_id_fp_mode = 0;*/
+    if (stall_all) begin
         next_id_rd = id_rd; 
         next_id_rs1 = id_rs1;
         next_id_rs2 = id_rs2;
         next_id_imm = id_imm;
+        next_id_jump_imm = id_jump_imm;
         next_id_funct3 = id_funct3;
+        next_id_ecall = id_ecall;
         next_id_alusrc = id_alusrc;
         next_id_mem_to_reg = id_mem_to_reg;
         next_id_reg_write = id_reg_write;
@@ -301,7 +333,7 @@ always @(*) begin
         next_id_op_mode = id_op_mode;
         next_id_func_op = id_func_op;
         next_id_fp_mode = id_fp_mode;
-    end else begin*/
+    end else begin
         next_id_rd = id_o_rd; 
         next_id_rs1 = id_o_rs1;
         next_id_rs2 = id_o_rs2;
@@ -318,7 +350,7 @@ always @(*) begin
         next_id_op_mode = id_o_op_mode;
         next_id_func_op = id_o_func_op;
         next_id_fp_mode = id_o_fp_mode;
-    //end
+    end
 end
 
 always @(posedge i_clk or negedge i_rst_n) begin
@@ -363,18 +395,57 @@ end
 // register file stage 
 // -------------------------------------------------------------------
 assign rf_i_reg_write = wb_reg_write;
+assign rf_i_stall = stall_all;
 assign rf_i_write_rd = wb_rd;
 assign rf_i_write_data = wb_reg_write_data;
 assign rf_i_read_rs1 = id_rs1;
 assign rf_i_read_rs2 = id_rs2;
 
 reg_file reg_file0 (
-    .i_rst_n(i_rst_n), .i_clk(i_clk),
+    .i_rst_n(i_rst_n), .i_clk(i_clk), .i_stall(rf_i_stall),
     .i_reg_write(rf_i_reg_write),
     .i_write_rd(rf_i_write_rd), .i_write_data(rf_i_write_data),
     .i_read_rs1(rf_i_read_rs1), .i_read_rs2(rf_i_read_rs2),
     .o_rs1_data(rf_o_rs1_data), .o_rs2_data(rf_o_rs2_data)
 );
+
+always @(*) begin
+    if (stall_all) begin
+        next_rf_rd = rf_rd;
+        next_rf_rs1 = rf_rs1;
+        next_rf_rs2 = rf_rs2;
+        next_rf_imm = rf_imm;
+        next_rf_jump_imm = rf_jump_imm;
+        next_rf_funct3 = rf_funct3;
+        next_rf_ecall = rf_ecall;
+        next_rf_alusrc = rf_alusrc;
+        next_rf_mem_to_reg = rf_mem_to_reg;
+        next_rf_reg_write = rf_reg_write;
+        next_rf_mem_read = rf_mem_read;
+        next_rf_mem_write = rf_mem_write;
+        next_rf_branch = rf_branch;
+        next_rf_op_mode = rf_op_mode;
+        next_rf_func_op = rf_func_op;
+        next_rf_fp_mode = rf_fp_mode;
+    end else begin
+        next_rf_rd = id_rd; 
+        next_rf_rs1 = id_rs1;
+        next_rf_rs2 = id_rs2;
+        next_rf_imm = id_imm;
+        next_rf_jump_imm = id_jump_imm;
+        next_rf_funct3 = id_funct3;
+        next_rf_ecall = id_ecall;
+        next_rf_alusrc = id_alusrc;
+        next_rf_mem_to_reg = id_mem_to_reg;
+        next_rf_reg_write = id_reg_write;
+        next_rf_mem_read = id_mem_read;
+        next_rf_mem_write = id_mem_write;
+        next_rf_branch = id_branch;
+        next_rf_op_mode = id_op_mode;
+        next_rf_func_op = id_func_op;
+        next_rf_fp_mode = id_fp_mode;
+    end
+end
 
 always @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
@@ -395,35 +466,36 @@ always @(posedge i_clk or negedge i_rst_n) begin
         rf_func_op <= 0;
         rf_fp_mode <= 0;
     end else begin
-        rf_rd <= id_rd; 
-        rf_rs1 <= id_rs1;
-        rf_rs2 <= id_rs2;
-        rf_imm <= id_imm;
-        rf_jump_imm <= id_jump_imm;
-        rf_funct3 <= id_funct3;
-        rf_ecall <= id_ecall;
-        rf_alusrc <= id_alusrc;
-        rf_mem_to_reg <= id_mem_to_reg;
-        rf_reg_write <= id_reg_write;
-        rf_mem_read <= id_mem_read;
-        rf_mem_write <= id_mem_write;
-        rf_branch <= id_branch;
-        rf_op_mode <= id_op_mode;
-        rf_func_op <= id_func_op;
-        rf_fp_mode <= id_fp_mode;
+        rf_rd <= next_rf_rd; 
+        rf_rs1 <= next_rf_rs1;
+        rf_rs2 <= next_rf_rs2;
+        rf_imm <= next_rf_imm;
+        rf_jump_imm <= next_rf_jump_imm;
+        rf_funct3 <= next_rf_funct3;
+        rf_ecall <= next_rf_ecall;
+        rf_alusrc <= next_rf_alusrc;
+        rf_mem_to_reg <= next_rf_mem_to_reg;
+        rf_reg_write <= next_rf_reg_write;
+        rf_mem_read <= next_rf_mem_read;
+        rf_mem_write <= next_rf_mem_write;
+        rf_branch <= next_rf_branch;
+        rf_op_mode <= next_rf_op_mode;
+        rf_func_op <= next_rf_func_op;
+        rf_fp_mode <= next_rf_fp_mode;
     end
 end
 
 // -------------------------------------------------------------------
 // ALU stage 
 // -------------------------------------------------------------------
+// ecall signals
 always @(*) begin
-    if (!rf_ecall) begin
+    if (rf_ecall) begin
         next_ecall_ready = 1;
         next_ecall_data = rf_o_rs1_data;
     end else begin
-        next_ecall_ready = ecall_ready;
-        next_ecall_data = ecall_data;
+        next_ecall_ready = 0;
+        next_ecall_data = 0;
     end
 end
 always @(posedge i_clk or negedge i_rst_n) begin
@@ -438,32 +510,21 @@ end
 assign o_ecall_ready = ecall_ready;
 assign o_ecall_data = ecall_data;
 
-
-assign branch_success = (alu_branch & (alu_op_mode == 3) & alu_o_result[0]);
-assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
-assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
+// ALU input
 assign alu_i_op_mode = rf_op_mode;
 assign alu_i_func_op = rf_func_op;
 assign alu_i_fp_mode = rf_fp_mode;
 assign alu_i_stall = stall_all;
 
 always @(*) begin
-    if (fw_alu_rs1) begin
-        alu_i_a = alu_o_result;
-    end else if (fw_dmm_rs1) begin
-        alu_i_a = dmm_alu_out;
-    end else begin
-        alu_i_a = rf_o_rs1_data;
-    end
-    if (rf_alusrc) begin // use immediate
-        alu_i_b = rf_imm;
-    end else if (fw_alu_rs2) begin
-        alu_i_b = alu_o_result;
-    end else if (fw_dmm_rs2) begin
-        alu_i_b = dmm_alu_out;
-    end else begin
-        alu_i_b = rf_o_rs2_data;
-    end
+    if (fw_alu_rs1)      alu_i_a = alu_o_result;
+    else if (fw_dmm_rs1) alu_i_a = dmm_alu_out;
+    else                 alu_i_a = rf_o_rs1_data; // no forwarding
+
+    if (rf_alusrc)       alu_i_b = rf_imm;
+    else if (fw_alu_rs2) alu_i_b = alu_o_result;
+    else if (fw_dmm_rs2) alu_i_b = dmm_alu_out;
+    else                 alu_i_b = rf_o_rs2_data; // no forwarding
 end
 
 alu alu0 (
@@ -475,15 +536,46 @@ alu alu0 (
     .o_stall(alu_o_stall)
 );
 
+// branch / jump
+assign branch_success = (alu_branch & (alu_op_mode == 3) & alu_o_result[0]);
+assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
+assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
+assign alu_branch_pc = $signed(pc) + $signed(alu_imm[31:2]);
+assign alu_jal_pc = $signed(pc) + $signed(alu_jump_imm[20:2]);
+assign alu_jalr_pc = $signed(alu_rs1_data) + $signed(alu_jump_imm[11:0]);
+
+// irrelevant pipeline signals
 always @(*) begin
-    if (branch_success) begin
-        alu_new_pc = $signed(pc) + $signed(alu_imm[31:2]);
-    end else if (alu_jal_mode) begin
-        alu_new_pc = pc + $signed(alu_jump_imm[20:2]);
-    end else if (alu_jalr_mode) begin
-        alu_new_pc = alu_rs1_data + $signed(alu_jump_imm[11:0]);
+    if (stall_all) begin
+        next_alu_rd = alu_rd; 
+        next_alu_rs1 = alu_rs1;
+        next_alu_rs2 = alu_rs2;
+        next_alu_rs1_data = alu_rs1_data;
+        next_alu_rs2_data = alu_rs2_data;
+        next_alu_imm = alu_imm;
+        next_alu_jump_imm = alu_jump_imm;
+        next_alu_funct3 = alu_funct3;
+        next_alu_mem_to_reg = alu_mem_to_reg;
+        next_alu_reg_write = alu_reg_write;
+        next_alu_mem_read = alu_mem_read;
+        next_alu_mem_write = alu_mem_write;
+        next_alu_branch = alu_branch;
+        next_alu_op_mode = alu_op_mode;
     end else begin
-        alu_new_pc = 0;
+        next_alu_rd = rf_rd; 
+        next_alu_rs1 = rf_rs1;
+        next_alu_rs2 = rf_rs2;
+        next_alu_rs1_data = rf_o_rs1_data;
+        next_alu_rs2_data = rf_o_rs2_data;
+        next_alu_imm = rf_imm;
+        next_alu_jump_imm = rf_jump_imm;
+        next_alu_funct3 = rf_funct3;
+        next_alu_mem_to_reg = rf_mem_to_reg;
+        next_alu_reg_write = rf_reg_write;
+        next_alu_mem_read = rf_mem_read;
+        next_alu_mem_write = rf_mem_write;
+        next_alu_branch = rf_branch;
+        next_alu_op_mode = rf_op_mode;
     end
 end
 
@@ -504,20 +596,20 @@ always @(posedge i_clk or negedge i_rst_n) begin
         alu_branch <= 0;
         alu_op_mode <= 0;
     end else begin
-        alu_rd <= rf_rd; 
-        alu_rs1 <= rf_rs1;
-        alu_rs2 <= rf_rs2;
-        alu_rs1_data <= rf_o_rs1_data;
-        alu_rs2_data <= rf_o_rs2_data;
-        alu_imm <= rf_imm;
-        alu_jump_imm <= rf_jump_imm;
-        alu_funct3 <= rf_funct3;
-        alu_mem_to_reg <= rf_mem_to_reg;
-        alu_reg_write <= rf_reg_write;
-        alu_mem_read <= rf_mem_read;
-        alu_mem_write <= rf_mem_write;
-        alu_branch <= rf_branch;
-        alu_op_mode <= rf_op_mode;
+        alu_rd <= next_alu_rd; 
+        alu_rs1 <= next_alu_rs1;
+        alu_rs2 <= next_alu_rs2;
+        alu_rs1_data <= next_alu_rs1_data;
+        alu_rs2_data <= next_alu_rs2_data;
+        alu_imm <= next_alu_imm;
+        alu_jump_imm <= next_alu_jump_imm;
+        alu_funct3 <= next_alu_funct3;
+        alu_mem_to_reg <= next_alu_mem_to_reg;
+        alu_reg_write <= next_alu_reg_write;
+        alu_mem_read <= next_alu_mem_read;
+        alu_mem_write <= next_alu_mem_write;
+        alu_branch <= next_alu_branch;
+        alu_op_mode <= next_alu_op_mode;
     end
 end
 
