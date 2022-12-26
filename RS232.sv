@@ -35,7 +35,7 @@ logic rst_n;
 assign avm_address = avm_address_r;
 assign avm_read = avm_read_r;
 assign avm_write = avm_write_r;
-assign avm_writedata = result_r[247-:8];
+assign avm_writedata = result_r[31-:8]; //
 
 cpu core_cpu(
     .i_rst_n(rst_n),
@@ -82,7 +82,7 @@ always@(*) begin
                 else if (avm_address_r == TX_BASE) begin
                     calculation_start_w = 0;
                     StartRead(STATUS_BASE);
-                    if (bytes_counter_r == 30) begin
+                    if (bytes_counter_r == 3) begin //
                         result_w = 0;
                         state_w = S_WAIT_CALCULATE;  //
                         bytes_counter_w = 0;                  
