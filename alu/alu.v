@@ -39,7 +39,7 @@ wire [31:0] shift_i_a, shift_i_b;
 wire [31:0] shift_o_result;
 
 wire comp_i_eq;   // 0: (<, >, !=), 1: (<=, >=, ==)
-wire comp_i_mode; // 00: <, 01: >, 1x: ==
+wire [ 1:0] comp_i_mode; // 00: <, 01: >, 1x: ==
 wire [31:0] comp_i_a, comp_i_b;
 wire [31:0] comp_o_result;
 
