@@ -313,7 +313,7 @@ end
 assign o_ecall_ready = rf_ecall;
 assign o_ecall_data = (rf_ecall) ? rf_o_rs1_data : 0;
 
-assign branch_success = (alu_branch & alu_o_result[0]); // TODO
+assign branch_success = (alu_branch & (alu_op_mode == 3) & alu_o_result[0]);
 assign alu_jal_mode = (alu_branch & (alu_op_mode == 4) & !alu_jump_imm[31]);
 assign alu_jalr_mode = (alu_branch & (alu_op_mode == 4) & alu_jump_imm[31]);
 assign alu_i_op_mode = rf_op_mode;
@@ -350,7 +350,9 @@ alu alu0 (
 );
 
 always @(*) begin
-    if (alu_jal_mode) begin
+    if (branch_success) begin
+        alu_new_pc = pc + $signed(alu_imm[31:2]);
+    end else if (alu_jal_mode) begin
         alu_new_pc = pc + $signed(alu_jump_imm[20:2]);
     end else if (alu_jalr_mode) begin
         alu_new_pc = alu_rs1_data + $signed(alu_jump_imm[11:0]);
