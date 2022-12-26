@@ -20,7 +20,10 @@ assign o_rs2_data = rs2_data;
 
 always_comb begin
     // next output
-    next_rs1_data = registers[i_read_rs1];
+    next_rs1_data = (i_write_rd == i_read_rs1) ? 
+                     i_write_data : registers[i_read_rs1];
+    next_rs2_data = (i_write_rd == i_read_rs2) ? 
+                     i_write_data : registers[i_read_rs2];
     next_rs2_data = registers[i_read_rs2];
     // next registers
     next_registers[0] = 0; // reserved
