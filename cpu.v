@@ -17,6 +17,7 @@ module cpu (
 // CPU top control
 wire nop, stall_all, has_branch, has_jump;
 wire fw_alu_rs1, fw_alu_rs2;
+wire fw_dmm_rs1, fw_dmm_rs2;
 
 // program counter
 reg  [31:0] pc, next_pc;
@@ -67,7 +68,8 @@ wire [2:0] alu_i_op_mode;
 wire [2:0] alu_i_func_op;
 wire alu_i_fp_mode;
 wire alu_i_stall, alu_o_stall;
-wire [31:0] alu_i_a, alu_i_b, alu_o_result;
+reg  [31:0] alu_i_a, alu_i_b;
+wire [31:0] alu_o_result;
 
 reg  [31:0] alu_new_pc;
 
@@ -112,6 +114,8 @@ assign has_jump = (id_o_branch & (id_o_op_mode == 4)) |
                   (rf_branch & (rf_op_mode == 4));
 assign fw_alu_rs1 = alu_reg_write & (alu_rd == rf_rs1);
 assign fw_alu_rs2 = alu_reg_write & (alu_rd == rf_rs2);
+assign fw_dmm_rs1 = dmm_reg_write & (dmm_rd == rf_rs1);
+assign fw_dmm_rs2 = dmm_reg_write & (dmm_rd == rf_rs2);
 
 // -------------------------------------------------------------------
 // program counter stage
@@ -306,9 +310,25 @@ assign alu_i_op_mode = rf_op_mode;
 assign alu_i_func_op = rf_func_op;
 assign alu_i_fp_mode = rf_fp_mode;
 assign alu_i_stall = stall_all;
-assign alu_i_a = (fw_alu_rs1) ? alu_o_result : rf_o_rs1_data;
-assign alu_i_b = (fw_alu_rs2) ? alu_o_result : 
-                                ((rf_alusrc) ? rf_imm : rf_o_rs2_data);
+
+always @(*) begin
+    if (fw_alu_rs1) begin
+        alu_i_a = alu_o_result;
+    end else if (fw_dmm_rs1) begin
+        alu_i_a = dmm_alu_out;
+    end else begin
+        alu_i_a = rf_o_rs1_data;
+    end
+    if (rf_alusrc) begin // use immediate
+        alu_i_b = rf_imm;
+    end else if (fw_alu_rs2) begin
+        alu_i_b = alu_o_result;
+    end else if (fw_dmm_rs1) begin
+        alu_i_b = dmm_alu_out;
+    end else begin
+        alu_i_b = rf_o_rs2_data;
+    end
+end
 
 alu alu0 (
     .i_rst_n(i_rst_n), .i_clk(i_clk),

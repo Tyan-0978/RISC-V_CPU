@@ -1,6 +1,6 @@
 module stage4_memory (
     input clk,
-	 input sw,
+    input rst_n,
     input mem_read,
     input mem_write,
     input [31:0] address,
@@ -153,8 +153,8 @@ always@(*) begin
 		  counter_w = 0;
 	end
 end
-always @ (posedge clk or negedge sw)begin 
-    if(!sw) begin
+always @ (posedge clk or negedge rst_n)begin 
+    if(!rst_n) begin
         counter_r <= 0;
         read_register_r <= 32'd0;
     end
