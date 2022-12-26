@@ -5,7 +5,6 @@ module inst_dec(
     output reg [4:0] o_rs2,
     output reg [31:0] o_imm,
     output reg [31:0] o_jump_imm,
-    output reg o_ecall,
     output reg [2:0] o_funct3,
     output reg o_alusrc,
     output reg o_mem_to_reg,
@@ -75,11 +74,6 @@ always@(*) begin
         o_jump_imm = {20'd1, i_inst_data[31:20]};
     else 
         o_jump_imm = 0;
-
-    if (opcode == E_OP)
-        o_ecall = 1;
-    else 
-        o_ecall = 0;
     
     case (opcode)
         // RV32I
@@ -178,7 +172,7 @@ always@(*) begin
             o_rd = 5'b00000;
             o_rs1 = rs1;
             o_rs2 = rs2;
-            o_imm = {{20{i_inst_data[31]}}, i_inst_data[31], i_inst_data[7], i_inst_data[30:25], i_inst_data[11:8], 1'b0};
+            o_imm = {20'd0, i_inst_data[31], i_inst_data[7], i_inst_data[30:25], i_inst_data[11:8], 1'b0};
             o_alusrc = 0;
             o_mem_to_reg = 0;
             o_reg_write = 0;
@@ -193,7 +187,7 @@ always@(*) begin
             o_rd = rd;
             o_rs1 = rs1;
             o_rs2 = 5'b00000;
-            o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
+            o_imm = {20'd0, i_inst_data[31:20]};
             o_alusrc = 1;
             o_mem_to_reg = 1;
             o_reg_write = 1;
@@ -208,7 +202,7 @@ always@(*) begin
             o_rd = 5'b00000;
             o_rs1 = rs1;
             o_rs2 = rs2;
-            o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:25], i_inst_data[11:7]};
+            o_imm = {20'd0, i_inst_data[31:25], i_inst_data[11:7]};
             o_alusrc = 1;
             o_mem_to_reg = 0;
             o_reg_write = 0;
@@ -226,32 +220,27 @@ always@(*) begin
                 3'b010: begin //SLTI set less then immediate
                     o_op_mode = 3;
                     o_func_op = 3'b000;
-                    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
+                    o_imm = 
                 end
                 3'b011: begin //SLTIU (currently do the same thing as SLTI) 
                     o_op_mode = 3;
                     o_func_op = 3'b000;
-                    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
                 end
                 3'b100: begin //XORI
                     o_op_mode = 1;
                     o_func_op = 3'b010;
-                    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
                 end
                 3'b110: begin //ORI
                     o_op_mode = 1;
                     o_func_op = 3'b001;
-                    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
                 end
                 3'b111: begin //ANDI
                     o_op_mode = 1;
                     o_func_op = 3'b000;
-                    o_imm = {{20{i_inst_data[31]}}, i_inst_data[31:20]};
                 end
                 3'b001: begin //SLLI
                     o_op_mode = 2;
                     o_func_op = 3'b000;
-                    o_imm = {{27'd0}, i_inst_data[24:20]};
                 end
                 3'b101: begin
                     if (funct7 == 7'b0000000) begin //SRLI
@@ -266,12 +255,10 @@ always@(*) begin
                         o_op_mode = 0;
                         o_func_op = 3'b000;
                     end
-                    o_imm = {{27'd0}, i_inst_data[24:20]};
                 end
                 default: begin
                     o_op_mode = 0;
                     o_func_op = 0;
-                    o_imm = 32'd0;
                 end
             endcase 
             o_fp_mode = 0;
@@ -283,7 +270,7 @@ always@(*) begin
             o_reg_write = 1;
             o_mem_read = 1;
             o_mem_write = 0;
-            o_branch = 0;
+            o_branch = 0; 
         end
         R_TYPE_OP: begin
             case(funct3) 
@@ -374,7 +361,6 @@ always@(*) begin
                     o_func_op = 3'b000;
                 end
             endcase
-            o_imm = 0;
             o_fp_mode = 0;
             o_rd = rd;
             o_rs1 = rs1;
@@ -387,20 +373,8 @@ always@(*) begin
             o_branch = 0;
         end
         // FENCE_OP:
-        E_OP: begin     
-            o_op_mode = 0;
-            o_func_op = 3'b000;
-            o_fp_mode = 0;
-            o_rd = 0;
-            o_rs1 = rs1;
-            o_rs2 = 0;
-            o_imm = 0;
-            o_alusrc = 0;
-            o_mem_to_reg = 0;
-            o_reg_write = 0;
-            o_mem_read = 0;
-            o_mem_write = 0;
-            o_branch = 0;
+        E_OP: begin
+            
         end
 
         // RV32F
