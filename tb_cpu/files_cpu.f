@@ -1,0 +1,12 @@
+./tb_cpu.sv
+../cpu.v
+../inst_dec.v
+../reg_file.sv
+../stage4_memory.v
+../alu/alu.v
+../alu/comp.v
+../alu/logic.v
+../alu/shift.v
+../alu/int_add_sub.v
+../alu/int_mul.v
+../alu/int_div.v
