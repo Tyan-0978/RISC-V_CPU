@@ -211,7 +211,7 @@ always @(*) begin
         next_id_op_mode = id_o_op_mode;
         next_id_func_op = id_o_func_op;
         next_id_fp_mode = id_o_fp_mode;
-    end
+    //end
 end
 
 always @(posedge i_clk or negedge i_rst_n) begin
