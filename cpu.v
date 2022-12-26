@@ -18,7 +18,8 @@ module cpu (
     output DRAM_CAS_N,
     output DRAM_CKE,
     output DRAM_CS_N,
-    inout  [31:0] DRAM_DQ,
+    //inout  [31:0] DRAM_DQ,
+    input  [31:0] DRAM_DQ,
     output [ 3:0] DRAM_DQM,
     output DRAM_RAS_N,
     output DRAM_WE_N,
@@ -255,7 +256,7 @@ assign im_sdram_chipselect = 0;
 assign im_sdram_read_n = 0;
 assign im_sdram_write_n = 1;
 assign im_writedata = 32'd0;
-
+/*
 sdram sdram0(
     .clocks_ref_clk_clk(i_clk),
     .clocks_ref_reset_reset(~i_rst_n),
@@ -279,8 +280,10 @@ sdram sdram0(
     .sdram_wire_ras_n(DRAM_RAS_N),
     .sdram_wire_we_n(DRAM_WE_N)
 );
-
-assign id_i_inst_data = im_sdram_readdata;
+*/
+assign DRAM_ADDR = pc[12:0];
+//assign id_i_inst_data = im_sdram_readdata;
+assign id_i_inst_data = DRAM_DQ;
 
 inst_dec inst_dec0 (
     .i_inst_data(id_i_inst_data),
@@ -492,7 +495,7 @@ end
 always @(*) begin
     if (rf_ecall) begin
         next_ecall_ready = 1;
-        next_ecall_data = rf_o_rs1_data;
+        next_ecall_data = alu_i_a;
     end else begin
         next_ecall_ready = 0;
         next_ecall_data = 0;
