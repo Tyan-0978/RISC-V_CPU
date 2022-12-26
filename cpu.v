@@ -31,8 +31,16 @@ module cpu (
     output [19:0] SRAM_ADDR,
     // devices
     input  [17:0] SW,
+    output [17:0] LEDR,
     output [ 8:0] LEDG,
-    output [17:0] LEDR
+    output [6:0] HEX0,
+    output [6:0] HEX1,
+    output [6:0] HEX2,
+    output [6:0] HEX3,
+    output [6:0] HEX4,
+    output [6:0] HEX5,
+    output [6:0] HEX6,
+    output [6:0] HEX7
 );
 
 localparam IDLE = 0;
@@ -163,6 +171,18 @@ assign i_clk = CLOCK_50;
 assign i_rst_n = ~KEY[0];
 assign i_start = KEY[3];
 
+SevenHexDecoder SevenHex0 (
+    .i_rs(ecall_data),
+    .o_seven_0(HEX0),
+    .o_seven_1(HEX1),
+    .o_seven_2(HEX2),
+    .o_seven_3(HEX3),
+    .o_seven_4(HEX4),
+    .o_seven_5(HEX5),
+    .o_seven_6(HEX6),
+    .o_seven_7(HEX7)
+);
+
 // -------------------------------------------------------------------
 // CPU top control
 // -------------------------------------------------------------------
@@ -205,7 +225,7 @@ always @(*) begin
     case (state) 
         IDLE: next_pc = 0;
         EXEC: begin
-            if (nop | stall_all) next_pc = pc;
+            if (nop | stall_all | id_o_ecall) next_pc = pc;
             else begin
                 if (branch_success)     next_pc = alu_branch_pc;
                 else if (alu_jal_mode)  next_pc = alu_jal_pc;
