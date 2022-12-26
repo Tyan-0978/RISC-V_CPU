@@ -27,7 +27,7 @@ always @(*) begin
             if (i_eq) result = (~is_smaller) | is_equal;
             else      result = ~is_smaller;
         end
-        2'b1x: begin
+        2'b10: begin
             if (i_eq) result = is_equal;
             else      result = ~is_equal;
         end
