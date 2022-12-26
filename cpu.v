@@ -6,7 +6,7 @@ module cpu (
     input  i_rst_n,
     input  i_clk,
     input  i_start,
-    input  [31:0] id_i_inst_data,
+    input  [31:0] i_inst,
     // ecall pins
     output        o_ecall_ready,
     output [31:0] o_ecall_data
@@ -143,6 +143,8 @@ end
 // -------------------------------------------------------------------
 // TODO: instruction memory
 
+assign id_i_inst_data = (nop) ? 0 : i_inst;
+
 inst_dec inst_dec0 (
     .i_inst_data(id_i_inst_data),
     .o_rd(id_o_rd), .o_rs1(id_o_rs1), .o_rs2(id_o_rs2),
@@ -160,7 +162,7 @@ inst_dec inst_dec0 (
 );
 
 always @(*) begin
-    if (nop) begin
+    /*if (nop) begin
         next_id_rd = 0; 
         next_id_rs1 = 0;
         next_id_rs2 = 0;
@@ -177,7 +179,7 @@ always @(*) begin
         next_id_op_mode = 0;
         next_id_func_op = 0;
         next_id_fp_mode = 0;
-    /*end else if (stall_all) begin
+    end else if (stall_all) begin
         next_id_rd = id_rd; 
         next_id_rs1 = id_rs1;
         next_id_rs2 = id_rs2;
@@ -191,8 +193,8 @@ always @(*) begin
         next_id_branch = id_branch;
         next_id_op_mode = id_op_mode;
         next_id_func_op = id_func_op;
-        next_id_fp_mode = id_fp_mode;*/
-    end else begin
+        next_id_fp_mode = id_fp_mode;
+    end else begin*/
         next_id_rd = id_o_rd; 
         next_id_rs1 = id_o_rs1;
         next_id_rs2 = id_o_rs2;
