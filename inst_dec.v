@@ -387,7 +387,7 @@ always@(*) begin
             o_branch = 0;
         end
         // FENCE_OP:
-        E_OP: begin     
+        E_OP: begin
             o_op_mode = 0;
             o_func_op = 3'b000;
             o_fp_mode = 0;
