@@ -1,3 +1,4 @@
+
 // -----------------------------------------------------------------------------
 // RISC-V CPU Core
 // -----------------------------------------------------------------------------
@@ -28,18 +29,22 @@ module cpu (
     output SRAM_LB_N,
     output SRAM_UB_N,
     inout  [15:0] SRAM_DQ,
-    output [19:0] SRAM_ADDR
+    output [19:0] SRAM_ADDR,
+	 output [8:0] LEDG,
+	 output [17:0] LEDR,
+	 input  [17:0] SW
 );
 
 // wires & registers -------------------------------------------------
 // CPU top control
-reg  state, next_state;
+reg [1:0] state, next_state;
 wire nop, stall_all, has_branch, has_jump;
 wire fw_alu_rs1, fw_alu_rs2;
 wire fw_dmm_rs1, fw_dmm_rs2;
 reg  ecall_ready, next_ecall_ready;
 reg  [31:0] ecall_data, next_ecall_data;
-
+assign LEDR[15:0] = ecall_data[15:0] ;
+assign LEDG[1:0] = {state,ecall_ready};
 // program counter
 reg  [31:0] pc, next_pc;
 
@@ -134,8 +139,8 @@ wire i_clk;
 wire i_rst_n;
 wire i_start;
 assign i_clk = CLOCK_50;
-assign i_rst_n = KEY[0];
-assign i_start = KEY[3];
+assign i_rst_n = SW[0];
+assign i_start = SW[3];
 
 // -------------------------------------------------------------------
 // CPU top control
@@ -147,9 +152,10 @@ always @(*) begin
             else         next_state = 0;
         end
         1: begin
-            if (id_o_ecall) next_state = 0;
+            if (id_o_ecall) next_state = 2;
             else          next_state = 1;
         end
+		  2: next_state = 2;
         default: next_state = 0;
     endcase
 end
@@ -158,7 +164,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
         state <= 0;
     end else begin
-        state <= 1;
+        state <= next_state;
     end
 end
 
@@ -177,19 +183,28 @@ assign fw_dmm_rs2 = dmm_reg_write & (dmm_rd == rf_rs2);
 // program counter stage
 // -------------------------------------------------------------------
 always @(*) begin
-    if (state) begin
+    case (state) 
+	 1:begin
         if (nop | stall_all) begin
             next_pc = pc;
-        end else begin
+        end 
+		  else if (id_o_ecall) begin
+				next_pc = pc;
+		  end
+		  else begin
             if (branch_success | alu_jal_mode | alu_jalr_mode) begin
                 next_pc = alu_new_pc;
             end else begin
                 next_pc = pc + 1;
             end
         end
-    end else begin
+    end 
+	 0: begin
         next_pc = 0;
     end
+	 2: next_pc = pc;
+	 default: next_pc = 0;
+	 endcase
 end
 
 always @(posedge i_clk or negedge i_rst_n) begin
@@ -211,9 +226,9 @@ assign im_sdram_read_n = 0;
 assign im_sdram_write_n = 1;
 assign im_writedata = 32'd0;
 
-nios_system sdram0(
+sdram sdram0(
     .clocks_ref_clk_clk(i_clk),
-    .clocks_ref_reset_reset(i_rst_n),
+    .clocks_ref_reset_reset(~i_rst_n),
     .sdram_s1_address(im_sdram_address),
     .sdram_s1_byteenable_n(im_sdram_byteenable_n),
     .sdram_s1_chipselect(im_sdram_chipselect),
@@ -403,7 +418,7 @@ end
 // ALU stage 
 // -------------------------------------------------------------------
 always @(*) begin
-    if (rf_ecall) begin
+    if (!rf_ecall) begin
         next_ecall_ready = 1;
         next_ecall_data = rf_o_rs1_data;
     end else begin
