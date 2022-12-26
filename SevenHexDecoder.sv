@@ -35,7 +35,7 @@ parameter D14 = 7'b0000100;
 parameter D15 = 7'b0001110;
 
 always_comb begin
-	case(i_rs[7:0])
+	case(i_rs[3:0])
 		4'h0: o_seven_0 = D0;
 		4'h1: o_seven_0 = D1;
 		4'h2: o_seven_0 = D2;
@@ -54,7 +54,7 @@ always_comb begin
 		4'hf: o_seven_0 = D15;
 	endcase
 
-	case(i_rs[15:8])
+	case(i_rs[7:4])
 		4'h0: o_seven_1 = D0;
 		4'h1: o_seven_1 = D1;
 		4'h2: o_seven_1 = D2;
@@ -73,7 +73,7 @@ always_comb begin
 		4'hf: o_seven_1 = D15;
 	endcase
 	
-	case(i_rs[23:16])
+	case(i_rs[11:8])
 		4'h0: o_seven_2 = D0;
 		4'h1: o_seven_2 = D1;
 		4'h2: o_seven_2 = D2;
@@ -92,7 +92,7 @@ always_comb begin
 		4'hf: o_seven_2 = D15;
 	endcase
 	
-	case(i_rs[31:24])
+	case(i_rs[15:12])
 		4'h0: o_seven_3 = D0;
 		4'h1: o_seven_3 = D1;
 		4'h2: o_seven_3 = D2;
@@ -111,7 +111,7 @@ always_comb begin
 		4'hf: o_seven_3 = D15;
 	endcase
 
-	case(i_rs[39:32])
+	case(i_rs[19:16])
 		4'h0: o_seven_4 = D0;
 		4'h1: o_seven_4 = D1;
 		4'h2: o_seven_4 = D2;
@@ -130,7 +130,7 @@ always_comb begin
 		4'hf: o_seven_4 = D15;
 	endcase
 
-	case(i_rs[47:40])
+	case(i_rs[23:20])
 		4'h0: o_seven_5 = D0;
 		4'h1: o_seven_5 = D1;
 		4'h2: o_seven_5 = D2;
@@ -149,7 +149,7 @@ always_comb begin
 		4'hf: o_seven_5 = D15;
 	endcase
 
-	case(i_rs[55:48])
+	case(i_rs[27:24])
 		4'h0: o_seven_6 = D0;
 		4'h1: o_seven_6 = D1;
 		4'h2: o_seven_6 = D2;
@@ -168,7 +168,7 @@ always_comb begin
 		4'hf: o_seven_6 = D15;
 	endcase
 
-	case(i_rs[63:56])
+	case(i_rs[31:28])
 		4'h0: o_seven_7 = D0;
 		4'h1: o_seven_7 = D1;
 		4'h2: o_seven_7 = D2;
