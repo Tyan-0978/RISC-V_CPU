@@ -88,7 +88,7 @@ always @(*) begin
 	        next_state = CALC;
 	    end
 	    else begin
-	        next_state = state;
+	        next_state = IDLE;
 	    end
 	    next_count = 0;
 	end

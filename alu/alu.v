@@ -129,7 +129,7 @@ assign int_div_i_valid = (is_mode_div ^ delayed_int_div_mode);
 
 // output stall signal
 assign mul_stall = (i_op_mode == INT_MUL && !int_mul_o_valid);
-assign div_stall = (i_op_mode == INT_DIV && !int_div_o_valid);
+assign div_stall = (((i_op_mode == INT_DIV) || (i_op_mode == INT_MOD)) && !int_div_o_valid);
 assign o_stall = (mul_stall | div_stall);
 
 assign o_result = result;
@@ -161,9 +161,9 @@ always @(posedge i_clk or negedge i_rst_n) begin
         delayed_int_div_mode <= 0;
         result <= 0;
     end else begin
-        result <= next_result;
         delayed_int_mul_mode <= (is_mode_mul & ~int_mul_o_valid);
         delayed_int_div_mode <= (is_mode_div & ~int_div_o_valid);
+        result <= next_result;
     end
 end
 
