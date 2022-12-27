@@ -158,9 +158,10 @@ wire [31:0] dmm_address, dmm_write_data, dmm_read_data;
 wire [ 2:0] dmm_funct3;
 wire dmm_out_stall;
 
-reg  [ 4:0] dmm_rd;
-reg  [31:0] dmm_alu_out;
+reg  [ 4:0] dmm_rd, next_dmm_rd;
+reg  [31:0] dmm_alu_out, next_dmm_alu_out;
 reg  dmm_mem_to_reg, dmm_reg_write;
+reg  next_dmm_mem_to_reg, next_dmm_reg_write;
 
 // write back stage
 wire [ 4:0] wb_rd;
@@ -655,6 +656,20 @@ stage4_memory dmm0 (
     .o_SRAM_ADDR(SRAM_ADDR)
 );
 
+always @(*) begin
+    if (stall_all) begin
+        next_dmm_rd = dmm_rd;
+        next_dmm_alu_out = dmm_alu_out;
+        next_dmm_mem_to_reg = dmm_mem_to_reg;
+        next_dmm_reg_write = dmm_reg_write;
+    end else begin
+        next_dmm_rd = alu_rd;
+        next_dmm_alu_out = alu_o_result;
+        next_dmm_mem_to_reg = alu_mem_to_reg;
+        next_dmm_reg_write = alu_reg_write;
+    end
+end
+
 always @(posedge i_clk or negedge i_rst_n) begin
     if (!i_rst_n) begin
         dmm_rd <= 0;
@@ -662,10 +677,10 @@ always @(posedge i_clk or negedge i_rst_n) begin
         dmm_mem_to_reg <= 0;
         dmm_reg_write <= 0;
     end else begin
-        dmm_rd <= alu_rd;
-        dmm_alu_out <= alu_o_result;
-        dmm_mem_to_reg <= alu_mem_to_reg;
-        dmm_reg_write <= alu_reg_write;
+        dmm_rd <= next_dmm_rd;
+        dmm_alu_out <= next_dmm_alu_out;
+        dmm_mem_to_reg <= next_dmm_mem_to_reg;
+        dmm_reg_write <= next_dmm_reg_write;
     end
 end
 
